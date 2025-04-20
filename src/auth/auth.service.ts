@@ -1,31 +1,32 @@
 import { Injectable } from '@nestjs/common';
-import * as admin from 'firebase-admin';
-import { ConfigService } from '@nestjs/config';
+import { FirebaseService } from '../firebase/firebase.service'; // Ajusta la ruta según tu estructura
 
 @Injectable()
 export class AuthService {
-  constructor(private configService: ConfigService) {
-    const raw = this.configService.get<string>('FIREBASE_CONFIG');
+  constructor(private readonly firebaseService: FirebaseService) {}
 
-    if (!raw) throw new Error('FIREBASE_CONFIG no definida');
-
-    const firebaseConfig = JSON.parse(raw);
-    firebaseConfig.private_key = firebaseConfig.private_key.replace(/\\n/g, '\n');
-
-    if (!admin.apps.length) {
-      admin.initializeApp({
-        credential: admin.credential.cert(firebaseConfig),
-        storageBucket: this.configService.get<string>('FIREBASE_STORAGE_BUCKET'),
-      });
-      console.log('✅ Firebase Admin inicializado con @nestjs/config');
-    }
+  async createUser(email: string, password: string, displayName: string) {
+    const auth = this.firebaseService.getAuth();
+  
+    const userRecord = await auth.createUser({
+      email,
+      password,
+      displayName,
+    });
+  
+    // Asignar el rol de 'user' como custom claim
+    await auth.setCustomUserClaims(userRecord.uid, { role: 'admin' });
+  
+    return userRecord;
   }
+  
 
   async verifyToken(idToken: string) {
-    return await admin.auth().verifyIdToken(idToken);
+    const auth = this.firebaseService.getAuth();
+    return await auth.verifyIdToken(idToken);
   }
 
   getStorage() {
-    return admin.storage().bucket();
+    return this.firebaseService.getBucket();
   }
 }
