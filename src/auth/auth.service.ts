@@ -14,8 +14,7 @@ export class AuthService {
       displayName,
     });
   
-    // Asignar el rol de 'user' como custom claim
-    await auth.setCustomUserClaims(userRecord.uid, { role: 'admin' });
+    await auth.setCustomUserClaims(userRecord.uid, { role: 'user' });
   
     return userRecord;
   }
