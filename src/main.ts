@@ -12,10 +12,7 @@ async function bootstrap() {
   const firebaseService = app.get(FirebaseService);
 
   app.useGlobalPipes(new ValidationPipe());
-  app.enableCors({
-    origin: '*',
-    credentials: true,
-  });
+  app.enableCors();
   app.use(json({ limit: '10mb'}));
   app.use(urlencoded( { extended: true, limit: '10mb'}));
 
