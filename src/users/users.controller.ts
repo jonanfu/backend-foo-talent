@@ -75,6 +75,7 @@ export class UsersController {
     description: 'UID del usuario a eliminar',
   })
   @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiOperation({ summary: 'Eliminar un usuario (solo admin)' })
   @Roles('admin')
   async deleteUser(@Param('uid') uid: string) {
     return this.usersService.deleteUser(uid);
