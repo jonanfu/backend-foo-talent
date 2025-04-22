@@ -2,6 +2,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { FirebaseService } from 'src/firebase/firebase.service';
 import { UpdateUserRoleDto } from './dto/update-role.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -35,6 +36,11 @@ export class UsersService {
       .getAuth()
       .setCustomUserClaims(uid, { role: dto.role });
     return { message: `Rol actualizado a ${dto.role}` };
+  }
+
+  async updateUser(uid: string, dto: UpdateUserDto) {
+    await this.firebaseService.getAuth().updateUser(uid, dto);
+    return { message: 'Usuario actualizado' };
   }
 
   async deleteUser(uid: string) {

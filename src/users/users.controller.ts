@@ -13,6 +13,7 @@ import { Roles } from 'src/auth/decorators/roles.decorator';
 import { UpdateUserRoleDto } from './dto/update-role.dto';
 import {
   ApiBearerAuth,
+  ApiBody,
   ApiOperation,
   ApiParam,
   ApiResponse,
@@ -20,6 +21,7 @@ import {
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @ApiTags('Users')
 @ApiBearerAuth('access-token')
@@ -55,6 +57,15 @@ export class UsersController {
   @ApiResponse({ status: 403, description: 'No tienes permiso' })
   async updateRole(@Param('uid') uid: string, @Body() dto: UpdateUserRoleDto) {
     return this.usersService.updateUserRole(uid, dto);
+  }
+
+  @Patch(':uid')
+  @ApiParam({ name: 'uid', description: 'UID del usuario a actualizar' })
+  @ApiBody({ type: UpdateUserDto })
+  @ApiOperation({ summary: 'Actualizar un usuario (solo admin)' })
+  @ApiResponse({ status: 200, description: 'Usuario actualizado' })
+  async updateUser(@Param('uid') uid: string, @Body() data: UpdateUserDto) {
+    return this.usersService.updateUser(uid, data);
   }
 
   @Delete(':uid')
