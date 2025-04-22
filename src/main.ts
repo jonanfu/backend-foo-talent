@@ -1,15 +1,12 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory, Reflector } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { RolesGuard } from './auth/guards/roles.guard'
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { json, urlencoded } from 'express'
-import { FirebaseService } from './firebase/firebase.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  const reflector = app.get(Reflector);
-  const firebaseService = app.get(FirebaseService);
+
 
   app.useGlobalPipes(new ValidationPipe());
   app.enableCors();

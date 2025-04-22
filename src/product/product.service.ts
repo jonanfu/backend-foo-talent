@@ -13,7 +13,7 @@ export class ProductService {
   }
 
   async create(dto: CreateProductDto, userId: string, file: Express.Multer.File) {
-    const fileName = `${uuid()}.pdf`;
+    const fileName = `uploads/${uuid()}.pdf`;
     const fileRef = this.firebaseService.getBucket().file(fileName);
 
     await fileRef.save(file.buffer, {
@@ -53,13 +53,69 @@ export class ProductService {
     return { id: doc.id, ...doc.data() };
   }
 
-  async update(id: string, dto: UpdateProductDto) {
-    await this.collection.doc(id).update({ ...dto });
-    return { message: 'Producto actualizada' };
+  async update(id: string, dto: UpdateProductDto, file?: Express.Multer.File) {
+    const docRef = this.collection.doc(id);
+    const docSnap = await docRef.get();
+  
+    if (!docSnap.exists) {
+      throw new NotFoundException('Producto no encontrado');
+    }
+  
+    const currentData = docSnap.data();
+    let newPdfUrl = currentData.pdfUrl;
+  
+    // Si hay archivo nuevo, subimos y borramos el anterior
+    if (file) {
+      if (currentData.pdfUrl) {
+        try {
+          await this.firebaseService.getBucket().file(currentData.pdfUrl).delete();
+          console.log('Archivo anterior eliminado');
+        } catch (e) {
+          console.error('Error al eliminar el PDF anterior:', e);
+        }
+      }
+  
+      const uniqueName = `${Date.now()}-${file.originalname}`;
+      const bucketFile = this.firebaseService.getBucket().file(uniqueName);
+  
+      await bucketFile.save(file.buffer, {
+        metadata: {
+          contentType: file.mimetype,
+        },
+      });
+  
+      newPdfUrl = bucketFile.publicUrl(); // o firma URL si usas acceso restringido
+    }
+  
+    await docRef.update({ ...dto, pdfUrl: newPdfUrl });
+  
+    return { message: 'Producto actualizado correctamente' };
   }
+  
 
   async remove(id: string) {
+    const docSnap = await this.collection.doc(id).get(); 
+  
+    if (!docSnap.exists) {
+      throw new NotFoundException('Producto no encontrado');
+    }
+  
+    const data = docSnap.data();
+    const pdfUrl = data?.pdfUrl;
+  
+    if (pdfUrl) {
+      try {
+        const file = this.firebaseService.getBucket().file(pdfUrl);
+        await file.delete();
+        console.log('Archivo eliminado exitosamente');
+      } catch (error) {
+        console.error('Error al eliminar el archivo:', error);
+      }
+    } else {
+      console.warn('No se encontró la URL del PDF, se omite la eliminación del archivo.');
+    }
+  
     await this.collection.doc(id).delete();
-    return { message: 'Producto eliminada' };
+    return { message: 'Producto eliminado' };
   }
 }
