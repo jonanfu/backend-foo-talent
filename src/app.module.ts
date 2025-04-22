@@ -5,6 +5,7 @@ import { ConfigModule } from "@nestjs/config";
 import { UsersModule } from './users/users.module';
 import { ProductModule } from './product/product.module';
 import { FirebaseModule } from './firebase/firebase.module';
+import { VacanciesModule } from './vacancies/vacancies.module';
 
 @Module({
   imports: [
@@ -14,7 +15,7 @@ import { FirebaseModule } from './firebase/firebase.module';
     AuthModule, 
     UsersModule, 
     ProductModule, 
-    FirebaseModule,
+    FirebaseModule, VacanciesModule,
   ],
 })
 export class AppModule {}
