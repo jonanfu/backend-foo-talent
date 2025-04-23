@@ -23,7 +23,7 @@ export class VacanciesController {
 
     @Post()
     @UseGuards(JwtAuthGuard, RolesGuard)
-    @Roles('admin', 'user')
+    @Roles('admin')
     @UseInterceptors(FileInterceptor('image'))
     @ApiConsumes('multipart/form-data')
     @ApiBody({
@@ -121,7 +121,7 @@ export class VacanciesController {
         return this.vacanciesService.remove(id);
     }
 
-    @Post(':id/image')
+    @Patch(':id/image')
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles('admin', 'user')
     @UseInterceptors(FileInterceptor('image'))

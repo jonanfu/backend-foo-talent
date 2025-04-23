@@ -5,7 +5,6 @@ import {
   BadRequestException,
   UsePipes,
   ValidationPipe,
-  Get,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { Public } from './decorators/public.decorator';
@@ -49,11 +48,6 @@ export class AuthController {
     } catch (err) {
       throw new BadRequestException('Token inválido o expirado');
     }
-  }
-
-  @Get('prueba')
-  Hola() {
-    return this.authService.getStorage();
   }
 
 }
