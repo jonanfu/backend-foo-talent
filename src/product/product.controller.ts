@@ -63,7 +63,7 @@ export class ProductController {
     return this.productService.findOne(id);
   }
 
-  @ApiTags('productos')
+  @ApiTags('products')
   @Patch(':id')
   @UseInterceptors(FileInterceptor('pdf')) // 'pdf' será el nombre del campo del archivo
   @ApiConsumes('multipart/form-data')
