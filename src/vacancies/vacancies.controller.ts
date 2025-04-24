@@ -25,7 +25,7 @@ export class VacanciesController {
 
     @Post()
     @UseGuards(JwtAuthGuard, RolesGuard)
-    @Roles('admin')
+    @Roles('admin', 'user')
     @UseInterceptors(FileInterceptor('image'))
     @ApiConsumes('multipart/form-data')
     @ApiBody({
@@ -85,6 +85,7 @@ export class VacanciesController {
     async findOne(@Param('id') id: string) {
         return this.vacanciesService.findOne(id);
     }
+
     @Patch(':id')
     @UseGuards(JwtAuthGuard)
     @ApiOperation({ summary: 'Actualizar vacante por ID (dueño o admin)' })

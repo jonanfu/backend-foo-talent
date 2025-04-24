@@ -4,6 +4,7 @@ import { CreateVacancyDto } from './dto/create-vacancy.dto';
 import { UpdateVacancyDto } from './dto/update-vacancy.dto';
 import { VacancyStatus } from './dto/create-vacancy.dto';
 import { v4 as uuid } from 'uuid';
+import { FieldValue } from 'firebase-admin/firestore';
 
 @Injectable()
 export class VacanciesService {
@@ -17,6 +18,10 @@ export class VacanciesService {
         // Validar tipo de imagen si existe
         if (image && !image.mimetype.match(/\/(jpg|jpeg|png)$/)) {
             throw new BadRequestException('Solo se permiten imágenes JPG/JPEG/PNG');
+        }
+        if (!image) return;
+        if (image.size > 5_000_000) {
+            throw new BadRequestException('La imagen no puede superar 5MB');
         }
 
         let imageUrl = '';
@@ -41,7 +46,7 @@ export class VacanciesService {
             userId,
             imageUrl,
             estado: dto.estado || VacancyStatus.ACTIVE,
-            createdAt: new Date(),
+            createdAt: FieldValue.serverTimestamp(),
         });
 
         return { id: doc.id };
