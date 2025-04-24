@@ -48,8 +48,9 @@ export class VacanciesService {
     }
 
     async findAll(status?: VacancyStatus, search = '', page = 1, limit = 10) {
-        let query = this.collection.orderBy('createdAt', 'desc');
+        let query = this.collection as FirebaseFirestore.Query;
 
+        // Filtros dinámicos
         if (status) {
             query = query.where('estado', '==', status);
         }
@@ -59,77 +60,61 @@ export class VacanciesService {
                 .where('nombre', '<=', search + '\uf8ff');
         }
 
+        query = query.orderBy('createdAt', 'desc');
+
         const snapshot = await query.offset((page - 1) * limit).limit(limit).get();
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     }
 
+
     async findOne(id: string) {
         const doc = await this.collection.doc(id).get();
-        if (!doc.exists) throw new NotFoundException('Vacante no encontrada');
+        if (!doc.exists) {
+            throw new NotFoundException(`La vacante con ID ${id} no existe`);
+        }
         return { id: doc.id, ...doc.data() };
     }
 
-    async update(id: string, dto: UpdateVacancyDto) {
-        await this.collection.doc(id).update({
-            ...dto,
-            updatedAt: new Date()
-        });
-        return { message: 'Vacante actualizada' };
-    }
+    async update(id: string, dto: UpdateVacancyDto, userId: string, isAdmin: boolean) {
+        const docRef = this.collection.doc(id);
+        const doc = await docRef.get();
 
-    async updateStatus(id: string, status: VacancyStatus) {
-        const doc = await this.collection.doc(id).get();
-        if (!doc.exists) throw new NotFoundException('Vacante no encontrada');
-
-        await this.collection.doc(id).update({
-            estado: status,
-            updatedAt: new Date()
-        });
-
-        return { message: `Estado actualizado a ${status}` };
-    }
-
-    async updateImage(id: string, userId: string, image: Express.Multer.File) {
-        if (!image?.mimetype.match(/\/(jpg|jpeg|png)$/)) {
-            throw new BadRequestException('Solo se permiten imágenes JPG/JPEG/PNG');
+        if (!doc.exists) {
+            throw new NotFoundException(`Vacante con ID ${id} no encontrada`);
         }
 
-        const doc = await this.collection.doc(id).get();
-        if (!doc.exists) throw new NotFoundException('Vacante no encontrada');
-
-        // Verificar permisos (solo admin o el creador puede cambiar imagen)
         const vacancy = doc.data();
-        if (vacancy.userId !== userId) {
+
+        if (!isAdmin && vacancy.userId !== userId) {
             throw new ForbiddenException('No tienes permiso para actualizar esta vacante');
         }
 
-        const fileName = `vacancies/${uuid()}.${image.mimetype.split('/')[1]}`;
-        const fileRef = this.firebaseService.getBucket().file(fileName);
-
-        await fileRef.save(image.buffer, {
-            metadata: {
-                contentType: image.mimetype,
-            },
-        });
-
-        const [imageUrl] = await fileRef.getSignedUrl({
-            action: 'read',
-            expires: '03-09-2030',
-        });
-
-        await this.collection.doc(id).update({
-            imageUrl,
+        await docRef.update({
+            ...dto,
             updatedAt: new Date()
         });
 
-        return { message: 'Imagen actualizada' };
+        return { id, message: 'Vacante actualizada correctamente' };
     }
 
-    async remove(id: string) {
-        const doc = await this.collection.doc(id).get();
-        if (!doc.exists) throw new NotFoundException('Vacante no encontrada');
 
-        await this.collection.doc(id).delete();
-        return { message: 'Vacante eliminada' };
+    async delete(id: string, userId: string, isAdmin: boolean) {
+        const docRef = this.collection.doc(id);
+        const doc = await docRef.get();
+
+        if (!doc.exists) {
+            throw new NotFoundException(`Vacante con ID ${id} no encontrada`);
+        }
+
+        const vacancy = doc.data();
+
+        // Verificar si el usuario es dueño o admin
+        if (!isAdmin && vacancy.userId !== userId) {
+            throw new ForbiddenException('No tienes permiso para eliminar esta vacante');
+        }
+
+        await docRef.delete();
+        return { id, message: 'Vacante eliminada correctamente' };
     }
+
 }
