@@ -14,32 +14,8 @@ export class VacanciesService {
         this.collection = this.firebaseService.getFirestore().collection('vacancies');
     }
 
-    async create(dto: CreateVacancyDto, userId: string, image?: Express.Multer.File) {
-        // Validar tipo de imagen si existe
-        if (image && !image.mimetype.match(/\/(jpg|jpeg|png)$/)) {
-            throw new BadRequestException('Solo se permiten imágenes JPG/JPEG/PNG');
-        }
-        if (!image) return;
-        if (image.size > 5_000_000) {
-            throw new BadRequestException('La imagen no puede superar 5MB');
-        }
-
-        let imageUrl = '';
-        if (image) {
-            const fileName = `vacancies/${uuid()}.${image.mimetype.split('/')[1]}`;
-            const fileRef = this.firebaseService.getBucket().file(fileName);
-
-            await fileRef.save(image.buffer, {
-                metadata: {
-                    contentType: image.mimetype,
-                },
-            });
-
-            [imageUrl] = await fileRef.getSignedUrl({
-                action: 'read',
-                expires: '03-09-2030',
-            });
-        }
+    async create(dto: CreateVacancyDto, userId: string) {
+        const imageUrl = dto.image || '';
 
         const doc = await this.collection.add({
             ...dto,
@@ -51,6 +27,7 @@ export class VacanciesService {
 
         return { id: doc.id };
     }
+
 
     async findAll(status?: VacancyStatus, search = '', page = 1, limit = 10) {
         let query = this.collection as FirebaseFirestore.Query;
@@ -94,14 +71,15 @@ export class VacanciesService {
             throw new ForbiddenException('No tienes permiso para actualizar esta vacante');
         }
 
-        await docRef.update({
+        const updateData = {
             ...dto,
-            updatedAt: new Date()
-        });
+            updatedAt: FieldValue.serverTimestamp(), 
+        };
+
+        await docRef.update(updateData);
 
         return { id, message: 'Vacante actualizada correctamente' };
     }
-
 
     async delete(id: string, userId: string, isAdmin: boolean) {
         const docRef = this.collection.doc(id);
