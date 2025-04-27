@@ -6,7 +6,7 @@ import {
 import { VacanciesService } from './vacancies.service';
 import { CreateVacancyDto } from './dto/create-vacancy.dto';
 import { UpdateVacancyDto } from './dto/update-vacancy.dto';
-import { FileInterceptor } from '@nestjs/platform-express';
+//import { FileInterceptor } from '@nestjs/platform-express';
 import {
     ApiConsumes, ApiBearerAuth, ApiTags, ApiBody,
     ApiOperation, ApiResponse, ApiQuery,
@@ -26,42 +26,19 @@ export class VacanciesController {
     @Post()
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles('admin', 'user')
-    @UseInterceptors(FileInterceptor('image'))
-    @ApiConsumes('multipart/form-data')
+    @ApiConsumes('application/json')
     @ApiBody({
         description: 'Crear una nueva vacante (imagen opcional)',
-        schema: {
-            type: 'object',
-            properties: {
-                nombre: {
-                    type: 'string',
-                    example: 'Desarrollador Backend',
-                    description: 'Nombre de la vacante'
-                },
-                descripcion: {
-                    type: 'string',
-                    example: 'Buscamos experto en NestJS',
-                    description: 'Descripción detallada del puesto'
-                },
-                fecha: {
-                    type: 'string',
-                    format: 'date-time',
-                    example: '2024-12-31',
-                    description: 'Fecha límite de aplicación'
-                },
-                estado: {
-                    type: 'string',
-                    enum: Object.values(VacancyStatus),
-                    example: VacancyStatus.ACTIVE,
-                    description: 'Estado actual de la vacante'
-                },
-                image: {
-                    type: 'string',
-                    format: 'binary',
-                    description: 'Imagen descriptiva (JPG/PNG)'
+        type: CreateVacancyDto,
+        examples: {
+            'application/json': {
+                value: {
+                    nombre: 'Desarrollador Backend',
+                    descripcion: 'Vacante para desarrollador backend con experiencia en Node.js y NestJS.',
+                    estado: VacancyStatus.ACTIVE,
+                    image: 'https://example.com/imagen.jpg',
                 }
-            },
-            required: ['nombre'] // Solo el nombre es obligatorio
+            }
         }
     })
     @ApiOperation({ summary: 'Crear una nueva vacante' })
@@ -70,10 +47,9 @@ export class VacanciesController {
     @ApiResponse({ status: 401, description: 'No autorizado' })
     async create(
         @Body() dto: CreateVacancyDto,
-        @UploadedFile() image?: Express.Multer.File,
         @Req() req?: any
     ) {
-        return this.vacanciesService.create(dto, req.user.uid, image);
+        return this.vacanciesService.create(dto, req.user.uid);
     }
 
     @Get(':id')
