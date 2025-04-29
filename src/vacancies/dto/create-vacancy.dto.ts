@@ -25,5 +25,9 @@ export class CreateVacancyDto {
     @IsEnum(VacancyStatus, {
         message: `Estado no válido. Opciones válidas: ${Object.values(VacancyStatus).join(', ')}`
     })
-    estado?: VacancyStatus = VacancyStatus.ACTIVE;
+    estado?: VacancyStatus;
+
+    @IsOptional()
+    @IsString()
+    image?: string;
 }
