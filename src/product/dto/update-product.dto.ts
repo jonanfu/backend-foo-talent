@@ -4,21 +4,16 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 export class UpdateProductDto {
   @IsOptional()
   @IsString()
-  @ApiPropertyOptional({ example: 'Nuevo nombre del producto' })
+  @ApiPropertyOptional({ type: String })
   nombre?: string;
 
   @IsOptional()
   @IsString()
-  @ApiPropertyOptional({ example: 'Descripción actualizada del producto' })
+  @ApiPropertyOptional({ type: String })
   descripcion?: string;
 
   @IsOptional()
   @IsDateString()
-  @ApiPropertyOptional({ example: '2025-04-22T12:12:46.470Z' })
+  @ApiPropertyOptional({ type: String, format: 'date-time' })
   fecha?: string;
-
-  @IsOptional()
-  @IsString()
-  @ApiPropertyOptional({ example: 'https://storage.googleapis.com/...' })
-  pdfUrl?: string;
 }

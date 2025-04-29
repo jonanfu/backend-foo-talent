@@ -23,10 +23,10 @@ export class AuthController {
   @ApiResponse({ status: 400, description: 'Error de validación o usuario existente' })
   @UsePipes(new ValidationPipe({ whitelist: true }))
   async register(@Body() createUserDto: CreateUserDto) {
-    const { email, password, displayName } = createUserDto;
+    const { email, password, displayName, role } = createUserDto;
 
     try {
-      const user = await this.authService.createUser(email, password, displayName);
+      const user = await this.authService.createUser(email, password, displayName, role);
       return {
         uid: user.uid,
         email: user.email,
