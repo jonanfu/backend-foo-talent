@@ -3,6 +3,14 @@
 
 Este proyecto se centra en el desarrollo de una API para la gestión de módulos de la REST API del proyecto Foo Talent, desarrollado por el equipo de la tarde. La iniciativa busca estructurar y optimizar los servicios necesarios para el manejo eficiente de los diferentes módulos que componen la plataforma, asegurando escalabilidad, mantenibilidad y facilidad de integración con otras partes del sistema.
 
+## Technologies 
+
+- [NestJS](https://nestjs.com/) – Framework para construir aplicaciones Node.js eficientes y escalables.
+- [Firebase Admin SDK](https://firebase.google.com/docs/admin/setup) – Administración de servicios de Firebase.
+- [Passport](http://www.passportjs.org/) – Middleware de autenticación para Node.js.
+- [Swagger](https://swagger.io/) – Documentación interactiva de APIs REST.
+- [Jest](https://jestjs.io/) – Framework para pruebas automatizadas.
+
 ## Project setup
 
 ## Cómo Obtener la Clave de Servicio para Firebase Admin SDK
