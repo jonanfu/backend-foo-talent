@@ -15,6 +15,8 @@ export class CreateUserDto {
   @IsNotEmpty({ message: 'El nombre de usuario no debe de estar vacía'})
   displayName: string;
 
+  @ApiProperty({ example: 'user', description: 'Role de usuario'})
+  @IsNotEmpty({ message: 'El role del usuario no debe de estar vacio'})
   @IsNotEmpty()
   role: string;
 }
