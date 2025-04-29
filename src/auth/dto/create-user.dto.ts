@@ -15,6 +15,6 @@ export class CreateUserDto {
   @IsNotEmpty({ message: 'El nombre de usuario no debe de estar vacía'})
   displayName: string;
 
-  @IsOptional()
-  role?: string;
+  @IsNotEmpty()
+  role: string;
 }

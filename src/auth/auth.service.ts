@@ -5,7 +5,7 @@ import { FirebaseService } from '../firebase/firebase.service'; // Ajusta la rut
 export class AuthService {
   constructor(private readonly firebaseService: FirebaseService) {}
 
-  async createUser(email: string, password: string, displayName: string) {
+  async createUser(email: string, password: string, displayName: string, role: string) {
     const auth = this.firebaseService.getAuth();
   
     const userRecord = await auth.createUser({
@@ -14,7 +14,7 @@ export class AuthService {
       displayName,
     });
   
-    await auth.setCustomUserClaims(userRecord.uid, { role: 'user' });
+    await auth.setCustomUserClaims(userRecord.uid, { role: role });
   
     return userRecord;
   }

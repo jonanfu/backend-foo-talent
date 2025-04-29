@@ -5,17 +5,21 @@ import { NotFoundException } from '@nestjs/common';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 
-const mockFirestore = {
-  collection: jest.fn().mockReturnThis(),
+// 👇 MOCKS completos de Firestore y Storage
+const mockCollection = {
+  add: jest.fn(),
   doc: jest.fn().mockReturnThis(),
   get: jest.fn(),
-  add: jest.fn(),
   update: jest.fn(),
   delete: jest.fn(),
   orderBy: jest.fn().mockReturnThis(),
   where: jest.fn().mockReturnThis(),
   offset: jest.fn().mockReturnThis(),
   limit: jest.fn().mockReturnThis(),
+};
+
+const mockFirestore = {
+  collection: jest.fn(() => mockCollection),
 };
 
 const mockBucket = {
@@ -27,12 +31,12 @@ const mockBucket = {
 };
 
 const mockFirebaseService = {
-  getFirestore: () => mockFirestore,
-  getBucket: () => mockBucket,
+  getFirestore: jest.fn(() => mockFirestore),
+  getBucket: jest.fn(() => mockBucket),
 };
 
 describe('ProductService', () => {
-  let service: ProductService;
+  let productService: ProductService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -45,90 +49,111 @@ describe('ProductService', () => {
       ],
     }).compile();
 
-    service = module.get<ProductService>(ProductService);
+    productService = module.get<ProductService>(ProductService);
   });
 
-  it('should create a product and upload a PDF', async () => {
-    const dto: CreateProductDto = {
-      nombre: 'Producto Test',
-      descripcion: 'Desc',
-      fecha: new Date().toISOString(),
-    };
-    const file = { buffer: Buffer.from('test'), mimetype: 'application/pdf' } as Express.Multer.File;
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
 
-    const addMock = jest.fn().mockResolvedValue({ id: '123' });
-    mockFirestore.collection = jest.fn().mockReturnValue({
-      add: addMock,
+  describe('create', () => {
+    it('should create a product and upload a PDF', async () => {
+      const dto: CreateProductDto = {
+        nombre: 'Producto Test',
+        descripcion: 'Desc',
+        fecha: new Date().toISOString(),
+      };
+      const file = { buffer: Buffer.from('test'), mimetype: 'application/pdf' } as Express.Multer.File;
+
+      mockCollection.add.mockResolvedValue({ id: '123' });
+
+      const result = await productService.create(dto, 'user123', file);
+
+      expect(result).toEqual({ id: '123' });
+      expect(mockBucket.file).toHaveBeenCalled();
+      expect(mockCollection.add).toHaveBeenCalled();
     });
-
-    const result = await service.create(dto, 'user123', file);
-    expect(result).toEqual({ id: '123' });
-    expect(mockBucket.file).toHaveBeenCalled();
-    expect(addMock).toHaveBeenCalled();
   });
 
-  it('should find all products', async () => {
-    mockFirestore.offset = jest.fn().mockReturnValue({
-      limit: jest.fn().mockReturnValue({
-        get: jest.fn().mockResolvedValue({
-          docs: [{ id: '1', data: () => ({ nombre: 'Test' }) }],
+  describe('findAll', () => {
+    it('should find all products', async () => {
+      mockCollection.offset.mockReturnValue({
+        limit: jest.fn().mockReturnValue({
+          get: jest.fn().mockResolvedValue({
+            docs: [{ id: '1', data: () => ({ nombre: 'Producto Test' }) }],
+          }),
         }),
-      }),
-    });
+      } as any);
 
-    const result = await service.findAll('', 1, 10);
-    expect(result).toEqual([{ id: '1', nombre: 'Test' }]);
+      const result = await productService.findAll('', 1, 10);
+
+      expect(result).toEqual([{ id: '1', nombre: 'Producto Test' }]);
+    });
   });
 
-  it('should return one product by id', async () => {
-    mockFirestore.get = jest.fn().mockResolvedValue({
-      exists: true,
-      id: '1',
-      data: () => ({ nombre: 'Test' }),
+  describe('findOne', () => {
+    it('should return one product by id', async () => {
+      mockCollection.doc.mockReturnValue({
+        get: jest.fn().mockResolvedValue({
+          exists: true,
+          id: '1',
+          data: () => ({ nombre: 'Producto Test' }),
+        }),
+      } as any);
+
+      const result = await productService.findOne('1');
+
+      expect(result).toEqual({ id: '1', nombre: 'Producto Test' });
     });
 
-    const result = await service.findOne('1');
-    expect(result).toEqual({ id: '1', nombre: 'Test' });
-  });
+    it('should throw NotFoundException if product does not exist', async () => {
+      mockCollection.doc.mockReturnValue({
+        get: jest.fn().mockResolvedValue({
+          exists: false,
+        }),
+      } as any);
 
-  it('should throw NotFoundException if product does not exist', async () => {
-    mockFirestore.get = jest.fn().mockResolvedValue({ exists: false });
-
-    await expect(service.findOne('fake')).rejects.toThrow(NotFoundException);
-  });
-
-  it('should update a product and upload a new file', async () => {
-    const dto: UpdateProductDto = {
-      nombre: 'Actualizado',
-      descripcion: 'Desc',
-      fecha: new Date().toISOString(),
-    };
-
-    const file = { buffer: Buffer.from('new'), mimetype: 'application/pdf', originalname: 'test.pdf' } as Express.Multer.File;
-
-    mockFirestore.doc = jest.fn().mockReturnValue({
-      get: jest.fn().mockResolvedValue({
-        exists: true,
-        data: () => ({ pdfUrl: 'old/url.pdf' }),
-      }),
-      update: jest.fn().mockResolvedValue(null),
+      await expect(productService.findOne('fake')).rejects.toThrow(NotFoundException);
     });
-
-    const result = await service.update('1', dto, file);
-    expect(result).toEqual({ message: 'Producto actualizado correctamente' });
   });
 
-  it('should delete product and PDF', async () => {
-    mockFirestore.doc = jest.fn().mockReturnValue({
-      get: jest.fn().mockResolvedValue({
-        exists: true,
-        data: () => ({ pdfUrl: 'old/url.pdf' }),
-      }),
-      delete: jest.fn(),
-    });
+  describe('update', () => {
+    it('should update a product and upload a new file', async () => {
+      const dto: UpdateProductDto = {
+        nombre: 'Actualizado',
+        descripcion: 'Desc actualizado',
+        fecha: new Date().toISOString(),
+      };
+      const file = { buffer: Buffer.from('new'), mimetype: 'application/pdf', originalname: 'test.pdf' } as Express.Multer.File;
 
-    const result = await service.remove('1');
-    expect(result).toEqual({ message: 'Producto eliminado' });
-    expect(mockBucket.delete).toHaveBeenCalled();
+      mockCollection.doc.mockReturnValue({
+        get: jest.fn().mockResolvedValue({
+          exists: true,
+          data: () => ({ pdfUrl: 'old/url.pdf' }),
+        }),
+        update: jest.fn().mockResolvedValue(null),
+      } as any);
+
+      const result = await productService.update('1', dto, file);
+
+      expect(result).toEqual({ message: 'Producto actualizado correctamente' });
+    });
+  });
+
+  describe('remove', () => {
+    it('should delete product and PDF', async () => {
+      mockCollection.doc.mockReturnValue({
+        get: jest.fn().mockResolvedValue({
+          exists: true,
+          data: () => ({ pdfUrl: 'old/url.pdf' }),
+        }),
+        delete: jest.fn().mockResolvedValue(null),
+      } as any);
+
+      const result = await productService.remove('1');
+
+      expect(result).toEqual({ message: 'Producto eliminado' });
+      expect(mockBucket.delete).toHaveBeenCalled();
+    });
   });
 });
