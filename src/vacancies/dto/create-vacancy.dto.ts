@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, IsDateString, IsEnum, IsOptional } from 'class-validator';
+import { IsNotEmpty, IsString, IsDateString, IsEnum, IsOptional, Length, Matches } from 'class-validator';
 
 export enum VacancyStatus {
     ACTIVE = 'activo',
@@ -15,6 +15,12 @@ export class CreateVacancyDto {
 
     @IsOptional()
     @IsString({ message: 'La descripción debe ser texto' })
+    @Length(200, 2000, {
+        message: 'La descripción debe tener entre 200 y 2000 caracteres'
+    })
+    @Matches(/^[^<>]*$/, {
+        message: 'La descripción no debe contener etiquetas HTML ni scripts'
+    })
     descripcion?: string;
 
     @IsOptional()
@@ -25,5 +31,9 @@ export class CreateVacancyDto {
     @IsEnum(VacancyStatus, {
         message: `Estado no válido. Opciones válidas: ${Object.values(VacancyStatus).join(', ')}`
     })
-    estado?: VacancyStatus = VacancyStatus.ACTIVE;
+    estado?: VacancyStatus;
+
+    @IsOptional()
+    @IsString()
+    image?: string;
 }
