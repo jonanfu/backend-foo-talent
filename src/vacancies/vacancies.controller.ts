@@ -82,8 +82,7 @@ export class VacanciesController {
 
 
     @Get()
-    @UseGuards(JwtAuthGuard)
-    @ApiOperation({ summary: 'Listar todas las vacantes (admin y user)' })
+    @ApiOperation({ summary: 'Listar todas las vacantes (publico)' })
     @ApiQuery({ name: 'status', required: false, enum: VacancyStatus, description: 'Filtrar por estado' })
     @ApiQuery({ name: 'search', required: false, type: String, description: 'Buscar por nombre' })
     @ApiQuery({ name: 'page', required: false, type: Number, description: 'Número de página' })
