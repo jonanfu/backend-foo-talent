@@ -79,5 +79,22 @@ export class UsersController {
   @Roles('admin')
   async deleteUser(@Param('uid') uid: string) {
     return this.usersService.deleteUser(uid);
+  }  
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiOperation({ summary: 'Desactivar un usuario (solo admin)' })
+  @Roles('admin')
+  @Patch('disable/:uid')
+  async disable(@Param('uid') uid: string) {
+    await this.usersService.disableUser(uid);
+    return { message: 'Usuario desactivado' };
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiOperation({ summary: 'Activar un usuario (solo admin)' })
+  @Roles('admin')
+  @Patch('enable/:uid')
+  async enable(@Param('uid') uid: string) {
+    await this.usersService.enableUser(uid);
+    return { message: 'Usuario re-activado' };
   }
 }

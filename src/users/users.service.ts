@@ -47,4 +47,16 @@ export class UsersService {
     await this.firebaseService.getAuth().deleteUser(uid);
     return { message: 'Usuario eliminado' };
   }
+
+
+  async disableUser(uid: string) {
+    const auth = this.firebaseService.getAuth();
+    return auth.updateUser(uid, { disabled: true });
+  }
+  
+  async enableUser(uid: string) {
+    const auth = this.firebaseService.getAuth();
+    return auth.updateUser(uid, { disabled: false });
+  }
+
 }
