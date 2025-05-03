@@ -5,13 +5,14 @@ import { FirebaseService } from '../firebase/firebase.service'; // Ajusta la rut
 export class AuthService {
   constructor(private readonly firebaseService: FirebaseService) {}
 
-  async createUser(email: string, password: string, displayName: string, role: string) {
+  async createUser(email: string, password: string, displayName: string, phoneNumber : string, role: string) {
     const auth = this.firebaseService.getAuth();
   
     const userRecord = await auth.createUser({
       email,
       password,
       displayName,
+      phoneNumber,
     });
   
     await auth.setCustomUserClaims(userRecord.uid, { role: role });
@@ -28,4 +29,4 @@ export class AuthService {
   getStorage() {
     return this.firebaseService.getBucket();
   }
-}
+} 
