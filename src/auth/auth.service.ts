@@ -41,4 +41,13 @@ export class AuthService {
       throw error; 
     }
   }
+
+  async generatePasswordResetLink(email: string): Promise<string> {
+    try {
+      const link = await this.firebaseService.getAuth().generatePasswordResetLink(email);
+      return link;
+    } catch (error) {
+      throw new Error(`No se pudo generar el enlace: ${error.message}`);
+    }
+  }
 } 

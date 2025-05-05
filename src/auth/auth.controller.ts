@@ -59,5 +59,19 @@ export class AuthController {
     return this.authService.isEmailRegistered(email);
   }
 
+  @Post('reset-password-link')
+  async getResetPasswordLink(@Query('email') email: string) {
+    if (!email) {
+      throw new BadRequestException('El campo "email" es obligatorio');
+    }
+
+    try {
+      const link = await this.authService.generatePasswordResetLink(email);
+      return { resetLink: link };
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  }
+
 }
 
