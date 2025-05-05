@@ -3,6 +3,8 @@ import { FirebaseService } from '../firebase/firebase.service';
 import { v4 as uuid } from 'uuid';
 import { CreateApplicationDto } from './dto/create-application.dto';
 import { ApplicationStatus } from './enums/application-status.enum';
+import { FieldValue } from 'firebase-admin/firestore';
+
 
 @Injectable()
 export class ApplicationService {
@@ -31,7 +33,7 @@ export class ApplicationService {
       ...dto,
       status: dto.status ?? ApplicationStatus.RECEIVED,
       cvPath: url,
-      createdAt: new Date().toISOString(),
+      createdAt: FieldValue.serverTimestamp(),
     });
 
     return {
