@@ -13,6 +13,7 @@ export class UsersService {
       uid: user.uid,
       email: user.email,
       displayName: user.displayName,
+      phoneNumber: user.phoneNumber,
       role: user.customClaims?.role || 'user',
     }));
   }
@@ -24,6 +25,7 @@ export class UsersService {
         uid: user.uid,
         email: user.email,
         displayName: user.displayName,
+        phoneNumber: user.phoneNumber || 'No disponible',
         role: user.customClaims?.role || 'user',
       };
     } catch (error) {
