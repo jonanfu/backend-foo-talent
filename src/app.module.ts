@@ -5,6 +5,7 @@ import { UsersModule } from './users/users.module';
 import { FirebaseModule } from './firebase/firebase.module';
 import { VacanciesModule } from './vacancies/vacancies.module';
 import { ApplicationModule } from './applications/application.module';
+import { NotificationModule } from './notifications/notification.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { ApplicationModule } from './applications/application.module';
     FirebaseModule,
     VacanciesModule,
     ApplicationModule,
+    NotificationModule
 
   ],
 })
