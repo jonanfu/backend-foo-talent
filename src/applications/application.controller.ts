@@ -59,8 +59,8 @@ export class ApplicationController {
   @ApiOperation({ summary: "Retorna las aplicaciones de una vacante"})
   @ApiResponse({ status: 200, description: 'Postulaciones listadas' })
   @ApiResponse({ status: 401, description: 'No autorizado' })
-  //@UseGuards(JwtAuthGuard, RolesGuard)
-  //@Roles('admin')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
   findAll(@Query() query: FindAllApplicationsDto) {
     const { vacancyId, status, page = '1', limit = '10' } = query;
     return this.applicationService.findAll(vacancyId, status, Number(page), Number(limit));
@@ -71,8 +71,8 @@ export class ApplicationController {
   @ApiParam({ name: 'id', description: 'ID de la vacante' })
   @ApiResponse({ status: 200, description: 'Aplicación encontrada' })
   @ApiResponse({ status: 404, description: 'Aplicación no encontrada' })
-  //@UseGuards(JwtAuthGuard, RolesGuard)
-  //@Roles('admin')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
   findOne(@Param('id') id: string) {
     return this.applicationService.findOne(id);
   }
@@ -82,8 +82,8 @@ export class ApplicationController {
   @ApiParam({ name: 'id', description: 'ID de la postulación' })
   @ApiResponse({ status: 200, description: 'Estado actualizado' })
   
-  //@UseGuards(JwtAuthGuard, RolesGuard)
-  //@Roles('admin')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
   updateStatus(
     @Param('id') id: string,
     @Body() dto: UpdateStatusDto,
