@@ -13,8 +13,9 @@ export class UsersService {
       uid: user.uid,
       email: user.email,
       displayName: user.displayName,
-      phoneNumber: user.phoneNumber,
+      phoneNumber: user.phoneNumber || 'No disponible',
       role: user.customClaims?.role || 'user',
+      createdAt: user.metadata.creationTime,
     }));
   }
 
@@ -27,6 +28,7 @@ export class UsersService {
         displayName: user.displayName,
         phoneNumber: user.phoneNumber || 'No disponible',
         role: user.customClaims?.role || 'user',
+        createdAt: user.metadata.creationTime,
       };
     } catch (error) {
       throw new NotFoundException('Usuario no encontrado');
