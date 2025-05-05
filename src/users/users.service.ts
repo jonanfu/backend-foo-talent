@@ -48,6 +48,7 @@ export class UsersService {
     return { message: 'Usuario eliminado' };
   }
 
+<<<<<<< HEAD
 
   async disableUser(uid: string) {
     const auth = this.firebaseService.getAuth();
@@ -59,4 +60,13 @@ export class UsersService {
     return auth.updateUser(uid, { disabled: false });
   }
 
+=======
+  async updatePassword(uid: string, newPassword: string) {
+    const user = await this.firebaseService.getAuth().updateUser(uid, {
+      password: newPassword,
+    });
+
+    return { message: 'Contraseña actualizada', uid: user.uid };
+  }
+>>>>>>> main
 }

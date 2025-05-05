@@ -68,6 +68,18 @@ export class UsersController {
     return this.usersService.updateUser(uid, data);
   }
 
+  @Patch(':uid/password')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin', 'superadmin')
+  @ApiOperation({ summary: 'Cambiar contraseña del usuario (Firebase)' })
+  @ApiBody({ schema: { properties: { password: { type: 'string' } } } })
+  async updatePassword(
+    @Param('uid') uid: string,
+    @Body() body: { password: string },
+  ) {
+    return this.usersService.updatePassword(uid, body.password);
+  }
+
   @Delete(':uid')
   @ApiParam({
     name: 'uid',
