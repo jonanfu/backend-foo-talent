@@ -29,4 +29,16 @@ export class AuthService {
   getStorage() {
     return this.firebaseService.getBucket();
   }
+
+  async isEmailRegistered(email: string): Promise<boolean> {
+    try {
+      await this.firebaseService.getAuth().getUserByEmail(email);
+      return true;
+    } catch (error) {
+      if (error.code === 'auth/user-not-found') {
+        return false; 
+      }
+      throw error; 
+    }
+  }
 } 

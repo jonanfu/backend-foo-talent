@@ -5,24 +5,20 @@ import {
   BadRequestException,
   UsePipes,
   ValidationPipe,
-  Patch,
-  Param,
-  UseGuards,
+  Get,
+  Query,
+
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
-import { Public } from './decorators/public.decorator';
 import { CreateUserDto } from './dto/create-user.dto';
 import { AuthService } from './auth.service';
-import { JwtAuthGuard } from './guards/jwt.guard';
-import { Roles } from './decorators/roles.decorator';
-import { RolesGuard } from './guards/roles.guard';
+
 
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) { }
 
-  @Public()
   @Post('register')
   @ApiOperation({ summary: 'Registrar un nuevo usuario' })
   @ApiResponse({ status: 201, description: 'Usuario creado exitosamente' })
@@ -44,7 +40,6 @@ export class AuthController {
     }
   }
 
-  @Public()
   @Post('verify-token')
   @ApiOperation({ summary: 'Verificar idToken de Firebase' })
   @ApiBody({ schema: { example: { idToken: 'string' } } })
@@ -58,6 +53,11 @@ export class AuthController {
     }
   }
   
+  @Get('check-email')
+  @ApiOperation({ summary: "Verificar si existe un correo de usuario en Firebase"})
+  async checkEmail(@Query('email') email: string) {
+    return this.authService.isEmailRegistered(email);
+  }
 
 }
 
