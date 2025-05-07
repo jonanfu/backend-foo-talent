@@ -8,6 +8,19 @@ export enum VacancyStatus {
     CANCELLED = 'cancelado',
 }
 
+export enum Modalidad {
+    PRESENCIAL = 'presencial',
+    REMOTO = 'remoto',
+    HIBRIDO = 'híbrido',
+}
+
+export enum Prioridad {
+    ALTA = 'alta',
+    MEDIA = 'media',
+    BAJA = 'baja',
+}
+
+
 export class CreateVacancyDto {
     @IsString()
     @IsNotEmpty({ message: 'El nombre es requerido' })
@@ -36,4 +49,21 @@ export class CreateVacancyDto {
     @IsOptional()
     @IsString()
     image?: string;
+
+    //NUEVOS CAMPOS
+    @IsOptional()
+    @IsString({ message: 'La ubicación debe ser una cadena' })
+    ubicacion?: string;
+
+    @IsOptional()
+    @IsEnum(Modalidad, {
+        message: `Modalidad no válida. Opciones: ${Object.values(Modalidad).join(', ')}`
+    })
+    modalidad?: Modalidad;
+
+    @IsOptional()
+    @IsEnum(Prioridad, {
+        message: `Prioridad no válida. Opciones: ${Object.values(Prioridad).join(', ')}`
+    })
+    prioridad?: Prioridad;
 }

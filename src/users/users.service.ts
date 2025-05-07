@@ -52,6 +52,7 @@ export class UsersService {
     return { message: 'Usuario eliminado' };
   }
 
+
   async disableUser(uid: string) {
     const auth = this.firebaseService.getAuth();
     return auth.updateUser(uid, { disabled: true });
