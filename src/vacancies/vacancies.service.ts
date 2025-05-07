@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { FirebaseService } from '../firebase/firebase.service';
-import { CreateVacancyDto } from './dto/create-vacancy.dto';
+import { CreateVacancyDto, Modalidad, Prioridad } from './dto/create-vacancy.dto';
 import { UpdateVacancyDto } from './dto/update-vacancy.dto';
 import { VacancyStatus } from './dto/create-vacancy.dto';
 import { v4 as uuid } from 'uuid';
@@ -17,19 +17,25 @@ export class VacanciesService {
     async create(dto: CreateVacancyDto, userId: string) {
         const imageUrl = dto.image || '';
 
+        const fechaActual = dto.fecha || new Date().toISOString().split('T')[0];
+
         const doc = await this.collection.add({
             ...dto,
             userId,
             imageUrl,
+            fecha: fechaActual,
             estado: dto.estado || VacancyStatus.ACTIVE,
             createdAt: FieldValue.serverTimestamp(),
+            ubicacion: dto.ubicacion || '',
+            modalidad: dto.modalidad || Modalidad.PRESENCIAL,
+            prioridad: dto.prioridad || Prioridad.ALTA,
         });
 
         return { id: doc.id };
     }
 
 
-    async findAll(status?: VacancyStatus, search = '', page = 1, limit = 10) {
+    async findAll(status?: VacancyStatus, search = '', page = 1, limit = 10, modalidad?: string, prioridad?: string, ubicacion?: string) {
         let query = this.collection as FirebaseFirestore.Query;
 
         // Filtros dinámicos
@@ -37,8 +43,21 @@ export class VacanciesService {
             query = query.where('estado', '==', status);
         }
 
+        if (modalidad) {
+            query = query.where('modalidad', '==', modalidad);
+        }
+
+        if (prioridad) {
+            query = query.where('prioridad', '==', prioridad);
+        }
+
+        if (ubicacion) {
+            query = query.where('ubicacion', '==', ubicacion);
+        }
+
         if (search) {
-            query = query.where('nombre', '>=', search)
+            query = query
+                .where('nombre', '>=', search)
                 .where('nombre', '<=', search + '\uf8ff');
         }
 
@@ -73,7 +92,7 @@ export class VacanciesService {
 
         const updateData = {
             ...dto,
-            updatedAt: FieldValue.serverTimestamp(), 
+            updatedAt: FieldValue.serverTimestamp(),
         };
 
         await docRef.update(updateData);
