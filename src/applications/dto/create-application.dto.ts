@@ -6,6 +6,7 @@ import {
   IsOptional,
   IsArray,
   IsEnum,
+  IsUrl,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { ApplicationStatus } from '../enums/application-status.enum';
@@ -36,6 +37,14 @@ export class CreateApplicationDto {
   @IsNotEmpty()
   @IsDateString({}, { message: 'La fecha debe tener formato válido (YYYY-MM-DD)' })
   birthDate: string;
+
+  @ApiProperty({
+    description: 'URL del CV',
+    example: 'https://example.com/cv.pdf'
+  })
+  @IsNotEmpty({ message: "La URL del CV es requerida" })
+  @IsUrl({}, { message: "Debe ser una URL válida" })
+  cvUrl: string;
 
   @Transform(({ value }) => {
     if (typeof value === 'string') {

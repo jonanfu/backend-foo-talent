@@ -1,7 +1,6 @@
 import {
   Controller, Get, Post, Body, Patch, Param, Delete, UseInterceptors,
-  UploadedFile, Query, Req,
-  UseGuards
+  UploadedFile, Query, Req, UseGuards
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiConsumes, ApiBearerAuth, ApiTags, ApiBody, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
@@ -20,43 +19,37 @@ export class ApplicationController {
   constructor(private readonly applicationService: ApplicationService) { }
 
   @Post()
-  @UseInterceptors(FileInterceptor('file'))
-  @ApiConsumes('multipart/form-data')
-  @ApiBody({
-    description: 'Crea una nueva postulación',
-    schema: {
-      type: 'object',
-      properties: {
-        vacancyId: { type: 'string' },
-        fullName: { type: 'string' },
-        email: { type: 'string', format: 'email' },
-        phone: {type: 'string'},
-        birthDate: { type: 'string', format: 'date' },
-        skills: {
-          type: 'string',
-          description: 'JSON string con lista de habilidades (solo para Swagger)',
-          example: '["NestJS", "TypeScript", "SQL"]',
-        },
-        file: {
-          type: 'string',
-          format: 'binary',
-        },
-      },
-    },
-  })
-  @ApiOperation({ summary: 'Crear una aplicacion de trabajo con CV' })
+  @ApiOperation({ summary: 'Crear una aplicación de trabajo con URL de CV' })
   @ApiResponse({ status: 201, description: 'Aplicación creada' })
   @ApiResponse({ status: 400, description: 'Datos inválidos' })
+  @ApiBody({
+    type: CreateApplicationDto,
+    description: 'Crea una nueva postulación con URL de CV',
+    examples: {
+      ejemplo1: {
+        summary: 'Aplicación básica',
+        value: {
+          vacancyId: "vac123",
+          fullName: "María González",
+          email: "maria@example.com",
+          phone: "+51987654321",
+          birthDate: "1995-05-15",
+          cvUrl: "https://bucket.example.com/cv_maria.pdf",
+          skills: ["JavaScript", "TypeScript", "NestJS"],
+          status: "Recibido"
+        }
+      }
+    }
+  })
   create(
     @Body() dto: CreateApplicationDto,
-    @UploadedFile() file: Express.Multer.File,
     @Req() req: any
   ) {
-    return this.applicationService.create(dto, file);
+    return this.applicationService.create(dto);
   }
 
   @Get()
-  @ApiOperation({ summary: "Retorna las aplicaciones de una vacante"})
+  @ApiOperation({ summary: "Retorna las aplicaciones de una vacante" })
   @ApiResponse({ status: 200, description: 'Postulaciones listadas' })
   @ApiResponse({ status: 401, description: 'No autorizado' })
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -67,7 +60,7 @@ export class ApplicationController {
   }
 
   @Get(':id')
-  @ApiOperation({ summary: "Retorna el detalle de una aplicación"})
+  @ApiOperation({ summary: "Retorna el detalle de una aplicación" })
   @ApiParam({ name: 'id', description: 'ID de la vacante' })
   @ApiResponse({ status: 200, description: 'Aplicación encontrada' })
   @ApiResponse({ status: 404, description: 'Aplicación no encontrada' })
@@ -81,7 +74,7 @@ export class ApplicationController {
   @ApiOperation({ summary: 'Actualizar estado de una postulación' })
   @ApiParam({ name: 'id', description: 'ID de la postulación' })
   @ApiResponse({ status: 200, description: 'Estado actualizado' })
-  
+
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')
   updateStatus(
