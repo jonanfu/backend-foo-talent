@@ -65,7 +65,7 @@ export class CreateApplicationDto {
   @IsEnum(ApplicationStatus, {
     message: `Status no válido. Opciones válidas: ${Object.values(ApplicationStatus).join(', ')}`
   })
-  status: ApplicationStatus;
+  status: ApplicationStatus = ApplicationStatus.RECEIVED;
 
   @ApiProperty({ required: false, description: 'Date when the application was submitted' })
   @IsOptional()
