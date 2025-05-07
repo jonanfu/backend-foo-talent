@@ -13,7 +13,9 @@ export class UsersService {
       uid: user.uid,
       email: user.email,
       displayName: user.displayName,
+      phoneNumber: user.phoneNumber || 'No disponible',
       role: user.customClaims?.role || 'user',
+      createdAt: user.metadata.creationTime,
     }));
   }
 
@@ -24,7 +26,9 @@ export class UsersService {
         uid: user.uid,
         email: user.email,
         displayName: user.displayName,
+        phoneNumber: user.phoneNumber || 'No disponible',
         role: user.customClaims?.role || 'user',
+        createdAt: user.metadata.creationTime,
       };
     } catch (error) {
       throw new NotFoundException('Usuario no encontrado');
@@ -48,6 +52,17 @@ export class UsersService {
     return { message: 'Usuario eliminado' };
   }
 
+
+  async disableUser(uid: string) {
+    const auth = this.firebaseService.getAuth();
+    return auth.updateUser(uid, { disabled: true });
+  }
+  
+  async enableUser(uid: string) {
+    const auth = this.firebaseService.getAuth();
+    return auth.updateUser(uid, { disabled: false });
+  }
+
   async updatePassword(uid: string, newPassword: string) {
     const user = await this.firebaseService.getAuth().updateUser(uid, {
       password: newPassword,
@@ -55,4 +70,5 @@ export class UsersService {
 
     return { message: 'Contraseña actualizada', uid: user.uid };
   }
+
 }

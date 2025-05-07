@@ -8,6 +8,7 @@ export class FirebaseService {
   private firestore: admin.firestore.Firestore;
   private auth: admin.auth.Auth;
   private bucket: Bucket;
+  private messaging: admin.messaging.Messaging;
 
   constructor(private configService: ConfigService) {
     const raw = this.configService.get<string>('FIREBASE_CONFIG');
@@ -41,5 +42,9 @@ export class FirebaseService {
 
   getBucket() {
     return this.bucket;
+  }
+
+  getMessaging() {
+    return this.messaging;
   }
 }
