@@ -57,7 +57,6 @@ export class VacanciesController {
 
 
     @Get(':id')
-    @UseGuards(JwtAuthGuard)
     @ApiOperation({ summary: 'Obtener una vacante por ID' })
     @ApiParam({ name: 'id', description: 'ID de la vacante' })
     @ApiResponse({ status: 200, description: 'Vacante encontrada' })
