@@ -33,7 +33,6 @@ export class ApplicationController {
           fullName: "María González",
           email: "maria@example.com",
           phone: "+51987654321",
-          birthDate: "1995-05-15",
           cvUrl: "https://bucket.example.com/cv_maria.pdf",
           skills: ["JavaScript", "TypeScript", "NestJS"],
           status: "Recibido"

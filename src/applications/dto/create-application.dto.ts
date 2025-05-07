@@ -33,11 +33,6 @@ export class CreateApplicationDto {
   @IsString()
   phone: string;
 
-  @ApiProperty()
-  @IsNotEmpty()
-  @IsDateString({}, { message: 'La fecha debe tener formato válido (YYYY-MM-DD)' })
-  birthDate: string;
-
   @ApiProperty({
     description: 'URL del CV',
     example: 'https://example.com/cv.pdf'
