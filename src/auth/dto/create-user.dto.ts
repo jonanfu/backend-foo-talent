@@ -1,4 +1,4 @@
-import { IsEmail, IsIn, isNotEmpty, IsNotEmpty, IsOptional, IsPhoneNumber, MinLength } from 'class-validator';
+import { IsEmail, IsIn, isNotEmpty, IsNotEmpty, IsOptional, IsPhoneNumber, MinLength,IsUrl } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateUserDto {
@@ -24,5 +24,14 @@ export class CreateUserDto {
   @IsNotEmpty({ message: 'El numero del usuario no debe de estar vacío' })
   @IsPhoneNumber( 'AR'  ,{ message: 'Formato de teléfono inválido' })
   phoneNumber: string;
+
+  @ApiProperty({
+    example: 'https://example.com/photo.jpg',
+    description: 'URL de la foto de perfil',
+    required: false
+  })
+  @IsOptional()
+  @IsUrl({}, { message: 'URL de foto inválida' })
+  photoUrl?: string;
 
 }
