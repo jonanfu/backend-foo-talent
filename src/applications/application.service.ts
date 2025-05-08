@@ -17,7 +17,7 @@ export class ApplicationService {
   async create(dto: CreateApplicationDto) {
     const doc = await this.collection.add({
       ...dto,
-      status: dto.status ?? ApplicationStatus.RECEIVED,
+      status: dto.status ?? ApplicationStatus.OPEN,
       cvPath: dto.cvUrl,
       createdAt: FieldValue.serverTimestamp(),
     });

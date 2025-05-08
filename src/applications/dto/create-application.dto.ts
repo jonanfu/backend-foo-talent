@@ -63,13 +63,13 @@ export class CreateApplicationDto {
 
   @ApiProperty({
     enum: Object.values(ApplicationStatus),
-    default: ApplicationStatus.RECEIVED,
+    default: ApplicationStatus.OPEN,
   })
   @IsOptional()
   @IsEnum(ApplicationStatus, {
     message: `Status no válido. Opciones válidas: ${Object.values(ApplicationStatus).join(', ')}`
   })
-  status: ApplicationStatus = ApplicationStatus.RECEIVED;
+  status: ApplicationStatus = ApplicationStatus.OPEN;
 
   @ApiProperty({ required: false, description: 'Date when the application was submitted' })
   @IsOptional()
