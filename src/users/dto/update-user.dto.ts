@@ -12,7 +12,7 @@ export class UpdateUserDto {
   @IsString()
   displayName?: string;
 
-  @ApiProperty({ example: "img.jpg"})
+ @ApiProperty({ example: "img.jpg"})
   @IsOptional()
   @IsString()
   photoURL?: string;

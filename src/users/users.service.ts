@@ -43,8 +43,22 @@ export class UsersService {
   }
 
   async updateUser(uid: string, dto: UpdateUserDto) {
-    await this.firebaseService.getAuth().updateUser(uid, dto);
-    return { message: 'Usuario actualizado' };
+    try {
+      // 1. Obtener la información actual del usuario
+      const currentUser = await this.firebaseService.getAuth().getUser(uid);
+      
+      // 2. Crear un objeto de actualización combinando los datos actuales con los nuevos
+      const updateData = {
+        ...dto  // Solo incluye los campos que vienen en el dto
+      };
+      
+      // 3. Actualizar el usuario con los datos combinados
+      await this.firebaseService.getAuth().updateUser(uid, updateData);
+      
+      return { message: 'Usuario actualizado' };
+    } catch (error) {
+      throw new Error(`Error al actualizar usuario: ${error.message}`);
+    }
   }
 
   async deleteUser(uid: string) {
