@@ -54,33 +54,46 @@ export class UsersService {
 
   async updateUser(uid: string, dto: UpdateUserDto) {
     try {
-      // Validar photoURL si viene en el DTO
+      // 1. Obtener usuario actual
+      const currentUser = await this.firebaseService.getAuth().getUser(uid);
+
+      // 2. Validar photoURL solo si viene en el DTO
       if (dto.photoUrl && !this.isValidHttpUrl(dto.photoUrl)) {
-        throw new BadRequestException('La URL de la foto no es válida');
+        throw new BadRequestException('URL de foto inválida');
       }
 
-      // Actualizar en Authentication
-      await this.firebaseService.getAuth().updateUser(uid, {
-        email: dto.email,
-        displayName: dto.displayName,
-        phoneNumber: dto.phoneNumber,
-        photoURL: dto.photoUrl,
-        disabled: dto.disabled,
-      });
+      // 3. Crear objeto de actualización combinando campos
+      const updateData: Partial<admin.auth.UpdateRequest> = {};
 
-      // Actualizar en Firestore 
+      // Solo actualizar campos presentes en el DTO
+      if (dto.email !== undefined) updateData.email = dto.email;
+      if (dto.displayName !== undefined) updateData.displayName = dto.displayName;
+      if (dto.phoneNumber !== undefined) updateData.phoneNumber = dto.phoneNumber;
+      if (dto.photoUrl !== undefined) updateData.photoURL = dto.photoUrl;
+      if (dto.disabled !== undefined) updateData.disabled = dto.disabled;
+
+      // 4. Actualizar en Firebase Auth
+      await this.firebaseService.getAuth().updateUser(uid, updateData);
+
+      // 5. Actualizar Firestore solo con campos modificados
       const db = this.firebaseService.getFirestore();
-      await db.collection('users').doc(uid).update({
-        ...dto,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      });
+      if (Object.keys(dto).length > 0) {
+        await db.collection('users').doc(uid).update({
+          ...dto,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+      }
 
       return {
         success: true,
         message: 'Usuario actualizado correctamente',
-        uid
+        updatedFields: Object.keys(dto)
       };
+
     } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
       throw new BadRequestException(`Error al actualizar usuario: ${error.message}`);
     }
   }
