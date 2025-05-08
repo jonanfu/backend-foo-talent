@@ -4,7 +4,7 @@ import {
     Put
 } from '@nestjs/common';
 import { VacanciesService } from './vacancies.service';
-import { CreateVacancyDto } from './dto/create-vacancy.dto';
+import { CreateVacancyDto, Modalidad, Prioridad } from './dto/create-vacancy.dto';
 import { UpdateVacancyDto } from './dto/update-vacancy.dto';
 //import { FileInterceptor } from '@nestjs/platform-express';
 import {
@@ -37,6 +37,9 @@ export class VacanciesController {
                     descripcion: 'Vacante para desarrollador backend con experiencia en Node.js y NestJS.',
                     estado: VacancyStatus.ACTIVE,
                     image: 'https://example.com/imagen.jpg',
+                    modalidad: 'remoto',
+                    prioridad: 'alta',
+                    ubicacion: 'Buenos Aires, Argentina'
                 }
             }
         }
@@ -52,8 +55,8 @@ export class VacanciesController {
         return this.vacanciesService.create(dto, req.user.uid);
     }
 
+
     @Get(':id')
-    @UseGuards(JwtAuthGuard)
     @ApiOperation({ summary: 'Obtener una vacante por ID' })
     @ApiParam({ name: 'id', description: 'ID de la vacante' })
     @ApiResponse({ status: 200, description: 'Vacante encontrada' })
@@ -82,22 +85,36 @@ export class VacanciesController {
 
 
     @Get()
-    @UseGuards(JwtAuthGuard)
-    @ApiOperation({ summary: 'Listar todas las vacantes (admin y user)' })
+    @ApiOperation({ summary: 'Listar todas las vacantes (publico)' })
     @ApiQuery({ name: 'status', required: false, enum: VacancyStatus, description: 'Filtrar por estado' })
     @ApiQuery({ name: 'search', required: false, type: String, description: 'Buscar por nombre' })
     @ApiQuery({ name: 'page', required: false, type: Number, description: 'Número de página' })
     @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Tamaño de página' })
+    @ApiQuery({ name: 'modalidad', required: false, enum: Modalidad, description: 'Filtrar por modalidad' })
+    @ApiQuery({ name: 'prioridad', required: false, enum: Prioridad, description: 'Filtrar por prioridad' })
+    @ApiQuery({ name: 'ubicacion', required: false, type: String, description: 'Filtrar por ubicación' })
     @ApiResponse({ status: 200, description: 'Vacantes listadas' })
     @ApiResponse({ status: 401, description: 'No autorizado' })
     async findAll(
         @Query('status') status?: VacancyStatus,
         @Query('search') search?: string,
         @Query('page') page = 1,
-        @Query('limit') limit = 10
+        @Query('limit') limit = 10,
+        @Query('modalidad') modalidad?: Modalidad,
+        @Query('prioridad') prioridad?: Prioridad,
+        @Query('ubicacion') ubicacion?: string
     ) {
-        return this.vacanciesService.findAll(status, search, +page, +limit);
+        return this.vacanciesService.findAll(
+            status,
+            search,
+            +page,
+            +limit,
+            modalidad,
+            prioridad,
+            ubicacion
+        );
     }
+
 
     @Delete(':id')
     @UseGuards(JwtAuthGuard)

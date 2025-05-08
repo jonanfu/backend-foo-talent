@@ -44,9 +44,10 @@ describe('AuthService', () => {
       const email = 'test@example.com';
       const password = 'password123';
       const displayName = 'Test User';
+      const phoneNumber = '+541157985656';
       const role = 'user';
 
-      const result = await authService.createUser(email, password, displayName, role);
+      const result = await authService.createUser(email, password, displayName,phoneNumber ,role);
 
       expect(firebaseService.getAuth).toHaveBeenCalled();
       expect(mockCreateUser).toHaveBeenCalledWith({ email, password, displayName });
