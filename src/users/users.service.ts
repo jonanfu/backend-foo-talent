@@ -11,12 +11,14 @@ export class UsersService {
 
   async listUsers(limit = 1000) {
     const list = await this.firebaseService.getAuth().listUsers(limit);
+    const defaultAvatar = await this.getCachedDefaultAvatarUrl();
+
     return list.users.map((user) => ({
       uid: user.uid,
       email: user.email,
       displayName: user.displayName,
       phoneNumber: user.phoneNumber || 'No disponible',
-      photoURL: user.photoURL || null,
+      photoURL: user.photoURL || defaultAvatar,
       role: user.customClaims?.role || 'user',
       createdAt: user.metadata.creationTime,
       disabled: user.disabled || false,
@@ -26,12 +28,14 @@ export class UsersService {
   async getUserById(uid: string) {
     try {
       const user = await this.firebaseService.getAuth().getUser(uid);
+      const defaultAvatar = await this.getCachedDefaultAvatarUrl();
+
       return {
         uid: user.uid,
         email: user.email,
         displayName: user.displayName,
         phoneNumber: user.phoneNumber || 'No disponible',
-        photoURL: user.photoURL || null,
+        photoURL: user.photoURL || defaultAvatar,
         role: user.customClaims?.role || 'user',
         createdAt: user.metadata.creationTime,
         disabled: user.disabled || false,
@@ -143,4 +147,16 @@ export class UsersService {
     const matches = url.match(/storage\.googleapis\.com\/[^\/]+\/(.+)/);
     return matches ? matches[1] : null;
   }
+  private defaultAvatarUrl: string | null = null;
+
+  private async getCachedDefaultAvatarUrl(): Promise<string> {
+    if (!this.defaultAvatarUrl) {
+      const bucket = this.firebaseService.getBucket();
+      const file = bucket.file('default-avatars/default-avatar.png');
+      const [url] = await file.getSignedUrl({ action: 'read', expires: '03-09-2030' });
+      this.defaultAvatarUrl = url;
+    }
+    return this.defaultAvatarUrl;
+  }
+
 }
