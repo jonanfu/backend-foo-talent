@@ -3,7 +3,6 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { FirebaseService } from 'src/firebase/firebase.service';
 import { UpdateUserRoleDto } from './dto/update-role.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import * as admin from 'firebase-admin';
 
 @Injectable()
 export class UsersService {
@@ -145,14 +144,34 @@ export class UsersService {
     const matches = url.match(/storage\.googleapis\.com\/[^\/]+\/(.+)/);
     return matches ? matches[1] : null;
   }
+
   private defaultAvatarUrl: string | null = null;
 
   private async getCachedDefaultAvatarUrl(): Promise<string> {
     if (!this.defaultAvatarUrl) {
-      const bucket = this.firebaseService.getBucket();
-      const file = bucket.file('default-avatars/default-avatar.png');
-      const [url] = await file.getSignedUrl({ action: 'read', expires: '03-09-2030' });
-      this.defaultAvatarUrl = url;
+      try {
+        const bucket = this.firebaseService.getBucket();
+        const file = bucket.file('default-avatars/default-avatar.png');
+
+        //Verificar que el archivo existe
+        const [exists] = await file.exists();
+
+        if (exists) {
+          const [url] = await file.getSignedUrl({
+            action: 'read',
+            expires: '01-01-2030'
+          });
+
+          this.defaultAvatarUrl = url;
+        } else {
+          //Fallback si no existe la imagen
+          this.defaultAvatarUrl = 'https://via.placeholder.com/150';
+        }
+
+      } catch (error) {
+        console.error('Error obteniendo avatar predeterminado:', error);
+        this.defaultAvatarUrl = 'https://via.placeholder.com/150';
+      }
     }
     return this.defaultAvatarUrl;
   }
