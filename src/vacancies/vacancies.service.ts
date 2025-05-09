@@ -1,9 +1,10 @@
+
+
+
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { FirebaseService } from '../firebase/firebase.service';
-import { CreateVacancyDto, Modalidad, Prioridad } from './dto/create-vacancy.dto';
+import { CreateVacancyDto, VacancyStatus, Modalidad, Prioridad, Jornada } from './dto/create-vacancy.dto';
 import { UpdateVacancyDto } from './dto/update-vacancy.dto';
-import { VacancyStatus } from './dto/create-vacancy.dto';
-import { v4 as uuid } from 'uuid';
 import { FieldValue } from 'firebase-admin/firestore';
 
 @Injectable()
@@ -15,27 +16,30 @@ export class VacanciesService {
     }
 
     async create(dto: CreateVacancyDto, userId: string) {
-        const imageUrl = dto.image || '';
-
+        // La fecha se asigna solo si no está definida en el DTO
         const fechaActual = dto.fecha || new Date().toISOString().split('T')[0];
 
-        const doc = await this.collection.add({
+        const vacancyData = {
             ...dto,
             userId,
-            imageUrl,
             fecha: fechaActual,
-            estado: dto.estado || VacancyStatus.ACTIVE,
             createdAt: FieldValue.serverTimestamp(),
-            ubicacion: dto.ubicacion || '',
-            modalidad: dto.modalidad || Modalidad.PRESENCIAL,
-            prioridad: dto.prioridad || Prioridad.ALTA,
-        });
+        };
 
+        const doc = await this.collection.add(vacancyData);
         return { id: doc.id };
     }
 
-
-    async findAll(status?: VacancyStatus, search = '', page = 1, limit = 10, modalidad?: string, prioridad?: string, ubicacion?: string) {
+    async findAll(
+        status?: VacancyStatus,
+        search = '',
+        page = 1,
+        limit = 10,
+        modalidad?: Modalidad,
+        prioridad?: Prioridad,
+        ubicacion?: string,
+        jornada?: Jornada,
+    ) {
         let query = this.collection as FirebaseFirestore.Query;
 
         // Filtros dinámicos
@@ -55,10 +59,14 @@ export class VacanciesService {
             query = query.where('ubicacion', '==', ubicacion);
         }
 
+        if (jornada) {
+            query = query.where('jornada', '==', jornada);
+        }
+
         if (search) {
             query = query
-                .where('nombre', '>=', search)
-                .where('nombre', '<=', search + '\uf8ff');
+                .where('puesto', '>=', search)
+                .where('puesto', '<=', search + '\uf8ff');
         }
 
         query = query.orderBy('createdAt', 'desc');
@@ -66,7 +74,6 @@ export class VacanciesService {
         const snapshot = await query.offset((page - 1) * limit).limit(limit).get();
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     }
-
 
     async findOne(id: string) {
         const doc = await this.collection.doc(id).get();
@@ -96,7 +103,6 @@ export class VacanciesService {
         };
 
         await docRef.update(updateData);
-
         return { id, message: 'Vacante actualizada correctamente' };
     }
 
@@ -110,7 +116,6 @@ export class VacanciesService {
 
         const vacancy = doc.data();
 
-        // Verificar si el usuario es dueño o admin
         if (!isAdmin && vacancy.userId !== userId) {
             throw new ForbiddenException('No tienes permiso para eliminar esta vacante');
         }
@@ -118,5 +123,4 @@ export class VacanciesService {
         await docRef.delete();
         return { id, message: 'Vacante eliminada correctamente' };
     }
-
 }

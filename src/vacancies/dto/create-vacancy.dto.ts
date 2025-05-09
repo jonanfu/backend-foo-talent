@@ -1,11 +1,9 @@
 import { IsNotEmpty, IsString, IsDateString, IsEnum, IsOptional, Length, Matches } from 'class-validator';
 
 export enum VacancyStatus {
-    ACTIVE = 'activo',
-    COMPLETED = 'terminado',
-    PAUSED = 'pausado',
-    DRAFT = 'borrador',
-    CANCELLED = 'cancelado',
+    OPEN = 'abierta',
+    CLOSED = 'cerrada',
+    PAUSED = 'pausa',
 }
 
 export enum Modalidad {
@@ -20,50 +18,66 @@ export enum Prioridad {
     BAJA = 'baja',
 }
 
+export enum Jornada {
+    COMPLETA = 'completa',
+    MEDIO_TIEMPO = 'medio_tiempo',
+}
 
 export class CreateVacancyDto {
     @IsString()
-    @IsNotEmpty({ message: 'El nombre es requerido' })
-    nombre: string;
+    @IsNotEmpty({ message: 'El puesto es requerido' })
+    puesto: string;
 
-    @IsOptional()
-    @IsString({ message: 'La descripción debe ser texto' })
+    @IsString()
+    @IsNotEmpty({ message: 'La ubicación es requerida' })
+    ubicacion: string;
+
+    @IsEnum(Modalidad, {
+        message: `Modalidad no válida. Opciones: ${Object.values(Modalidad).join(', ')}`
+    })
+    @IsNotEmpty({ message: 'La modalidad es requerida' })
+    modalidad: Modalidad;
+
+    @IsEnum(Prioridad, {
+        message: `Prioridad no válida. Opciones: ${Object.values(Prioridad).join(', ')}`
+    })
+    @IsNotEmpty({ message: 'La prioridad es requerida' })
+    prioridad: Prioridad;
+
+    @IsEnum(VacancyStatus, {
+        message: `Estado no válido. Opciones válidas: ${Object.values(VacancyStatus).join(', ')}`
+    })
+    @IsNotEmpty({ message: 'El estado es requerido' })
+    estado: VacancyStatus;
+
+    @IsString()
+    @IsNotEmpty({ message: 'La descripción es requerida' })
     @Length(200, 2000, {
         message: 'La descripción debe tener entre 200 y 2000 caracteres'
     })
     @Matches(/^[^<>]*$/, {
         message: 'La descripción no debe contener etiquetas HTML ni scripts'
     })
-    descripcion?: string;
+    descripcion: string;
+
+    @IsOptional()
+    @IsEnum(Jornada, {
+        message: `Jornada no válida. Opciones: ${Object.values(Jornada).join(', ')}`
+    })
+    jornada?: Jornada;
+
+    @IsOptional()
+    @IsString({ message: 'La experiencia debe ser una cadena' })
+    experiencia?: string;
+
+    @IsOptional()
+    @IsString({ message: 'Las responsabilidades deben ser una cadena' })
+    @Matches(/^[^<>]*$/, {
+        message: 'Las responsabilidades no deben contener etiquetas HTML ni scripts'
+    })
+    responsabilidades?: string;
 
     @IsOptional()
     @IsDateString({}, { message: 'La fecha debe tener formato válido (YYYY-MM-DD)' })
     fecha?: string;
-
-    @IsOptional()
-    @IsEnum(VacancyStatus, {
-        message: `Estado no válido. Opciones válidas: ${Object.values(VacancyStatus).join(', ')}`
-    })
-    estado?: VacancyStatus;
-
-    @IsOptional()
-    @IsString()
-    image?: string;
-
-    //NUEVOS CAMPOS
-    @IsOptional()
-    @IsString({ message: 'La ubicación debe ser una cadena' })
-    ubicacion?: string;
-
-    @IsOptional()
-    @IsEnum(Modalidad, {
-        message: `Modalidad no válida. Opciones: ${Object.values(Modalidad).join(', ')}`
-    })
-    modalidad?: Modalidad;
-
-    @IsOptional()
-    @IsEnum(Prioridad, {
-        message: `Prioridad no válida. Opciones: ${Object.values(Prioridad).join(', ')}`
-    })
-    prioridad?: Prioridad;
 }
