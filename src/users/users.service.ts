@@ -54,46 +54,31 @@ export class UsersService {
 
   async updateUser(uid: string, dto: UpdateUserDto) {
     try {
-      // 1. Obtener usuario actual
-      const currentUser = await this.firebaseService.getAuth().getUser(uid);
-
-      // 2. Validar photoURL solo si viene en el DTO
+      // 1. Validar photoURL si está presente
       if (dto.photoUrl && !this.isValidHttpUrl(dto.photoUrl)) {
-        throw new BadRequestException('URL de foto inválida');
+        throw new BadRequestException('La URL de la foto no es válida');
       }
 
-      // 3. Crear objeto de actualización combinando campos
-      const updateData: Partial<admin.auth.UpdateRequest> = {};
+      // 2. Crear objeto de actualización dinámico
+      const updateData: Record<string, any> = {};
 
-      // Solo actualizar campos presentes en el DTO
+      // 3. Mapear solo los campos proporcionados
       if (dto.email !== undefined) updateData.email = dto.email;
       if (dto.displayName !== undefined) updateData.displayName = dto.displayName;
       if (dto.phoneNumber !== undefined) updateData.phoneNumber = dto.phoneNumber;
       if (dto.photoUrl !== undefined) updateData.photoURL = dto.photoUrl;
       if (dto.disabled !== undefined) updateData.disabled = dto.disabled;
 
-      // 4. Actualizar en Firebase Auth
+      // 4. Ejecutar actualización en Firebase Auth
       await this.firebaseService.getAuth().updateUser(uid, updateData);
-
-      // 5. Actualizar Firestore solo con campos modificados
-      const db = this.firebaseService.getFirestore();
-      if (Object.keys(dto).length > 0) {
-        await db.collection('users').doc(uid).update({
-          ...dto,
-          updatedAt: admin.firestore.FieldValue.serverTimestamp()
-        });
-      }
 
       return {
         success: true,
         message: 'Usuario actualizado correctamente',
-        updatedFields: Object.keys(dto)
+        updatedFields: Object.keys(updateData)
       };
 
     } catch (error) {
-      if (error instanceof BadRequestException) {
-        throw error;
-      }
       throw new BadRequestException(`Error al actualizar usuario: ${error.message}`);
     }
   }
