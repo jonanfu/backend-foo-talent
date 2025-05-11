@@ -64,7 +64,7 @@ export class ApplicationController {
   @ApiResponse({ status: 200, description: 'Aplicación encontrada' })
   @ApiResponse({ status: 404, description: 'Aplicación no encontrada' })
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('admin')
+  @Roles('admin', 'user')
   findOne(@Param('id') id: string) {
     return this.applicationService.findOne(id);
   }
