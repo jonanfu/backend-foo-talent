@@ -52,7 +52,7 @@ export class ApplicationController {
   @ApiResponse({ status: 200, description: 'Postulaciones listadas' })
   @ApiResponse({ status: 401, description: 'No autorizado' })
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('admin')
+  @Roles('admin', 'user')
   findAll(@Query() query: FindAllApplicationsDto) {
     const { vacancyId, status, page = '1', limit = '10' } = query;
     return this.applicationService.findAll(vacancyId, status, Number(page), Number(limit));
