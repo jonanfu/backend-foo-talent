@@ -75,7 +75,7 @@ export class ApplicationController {
   @ApiResponse({ status: 200, description: 'Estado actualizado' })
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('admin')
+  @Roles('admin', 'user')
   updateStatus(
     @Param('id') id: string,
     @Body() dto: UpdateStatusDto,
