@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AuthService } from './auth.service';
 import { FirebaseService } from '../firebase/firebase.service';
 
-// Mock del FirebaseService
+
 const mockFirebaseService = {
   getAuth: jest.fn(),
   getBucket: jest.fn(),

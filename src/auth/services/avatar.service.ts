@@ -21,7 +21,6 @@ export class AvatarService {
             return url;
         } catch (error) {
             console.error('Error al obtener avatar predeterminado:', error);
-            // Fallback a URL pública directa
             return `https://storage.googleapis.com/reclutamiento-12537.appspot.com/${this.defaultAvatarPath}`;
         }
     }

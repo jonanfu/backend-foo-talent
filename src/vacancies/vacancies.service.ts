@@ -1,6 +1,3 @@
-
-
-
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { FirebaseService } from '../firebase/firebase.service';
 import { CreateVacancyDto, VacancyStatus, Modalidad, Prioridad, Jornada } from './dto/create-vacancy.dto';
@@ -16,7 +13,6 @@ export class VacanciesService {
     }
 
     async create(dto: CreateVacancyDto, userId: string) {
-        // La fecha se asigna solo si no está definida en el DTO
         const fechaActual = dto.fecha || new Date().toISOString().split('T')[0];
 
         const vacancyData = {
@@ -42,7 +38,6 @@ export class VacanciesService {
     ) {
         let query = this.collection as FirebaseFirestore.Query;
 
-        // Filtros dinámicos
         if (status) {
             query = query.where('estado', '==', status);
         }
