@@ -73,7 +73,6 @@ export class ApplicationController {
   @ApiOperation({ summary: 'Actualizar estado de una postulación' })
   @ApiParam({ name: 'id', description: 'ID de la postulación' })
   @ApiResponse({ status: 200, description: 'Estado actualizado' })
-
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin', 'user')
   updateStatus(
