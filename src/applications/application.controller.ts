@@ -58,6 +58,15 @@ export class ApplicationController {
     return this.applicationService.findAll(vacancyId, status, Number(page), Number(limit));
   }
 
+  @Get(':userId')
+  @ApiOperation({ summary: 'Retorna todas las aplicaciones por usuariop'})
+  @ApiParam({ name: 'userId', description: 'Id del usuario'})
+  @ApiResponse({ status: 200, description: "Postulaciones encontradas"})
+  @ApiResponse({ status: 404, description: 'Postulaciones no encontradas'})
+  async applicationsByRecruiter(@Param('userId') userId: string){
+    return await this.applicationService.findAllApplicationsByRecruiter(userId);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: "Retorna el detalle de una aplicación" })
   @ApiParam({ name: 'id', description: 'ID de la vacante' })

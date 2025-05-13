@@ -83,6 +83,23 @@ export class VacanciesService {
         return { id: doc.id, ...doc.data() };
     }
 
+    async findAllVacanciesByRecruiter(userId: string) {
+        const vacanciesSnapshot = await this.collection
+          .where('userId', '==', userId)
+          .get();
+      
+        if (vacanciesSnapshot.empty) {
+          throw new NotFoundException('Vacantes no encontradas');
+        }
+      
+        const vacancies = vacanciesSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+      
+        return vacancies;
+    }
+
     async update(id: string, dto: UpdateVacancyDto, userId: string, isAdmin: boolean) {
         const docRef = this.collection.doc(id);
         const doc = await docRef.get();

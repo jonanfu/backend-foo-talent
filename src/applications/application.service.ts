@@ -4,13 +4,26 @@ import { v4 as uuid } from 'uuid';
 import { CreateApplicationDto } from './dto/create-application.dto';
 import { ApplicationStatus } from './enums/application-status.enum';
 import { FieldValue } from 'firebase-admin/firestore';
+import { VacanciesService } from 'src/vacancies/vacancies.service';
 
+interface Application {
+  id: string;
+  vacancyId: string;
+  status: ApplicationStatus;
+  cvPath: string;
+  createdAt: any;
+  [key: string]: any;
+}
 
 @Injectable()
 export class ApplicationService {
   private collection;
 
-  constructor(private firebaseService: FirebaseService) {
+  constructor(
+    private firebaseService: FirebaseService,
+    private vacancyService: VacanciesService
+
+  ) {
     this.collection = this.firebaseService.getFirestore().collection('applications');
   }
 
@@ -42,6 +55,33 @@ export class ApplicationService {
       .get();
 
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  }
+
+  async findAllApplicationsByRecruiter(userId: string) {
+    const vacancies = await this.vacancyService.findAllVacanciesByRecruiter(userId);
+    
+    const allApplications:any = [];
+  
+    for (const vacancy of vacancies) {
+      const applicationsSnapshot = await this.collection
+        .where('vacancyId', '==', vacancy.id)
+        .get();
+  
+      if (!applicationsSnapshot.empty) {
+        const applications = applicationsSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        
+        allApplications.push(...applications);
+      }
+    }
+  
+    if (allApplications.length === 0) {
+      throw new NotFoundException('No se encontraron aplicaciones para las vacantes de este reclutador');
+    }
+  
+    return allApplications;
   }
 
   async findOne(id: string) {
