@@ -1,6 +1,3 @@
-
-
-
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { FirebaseService } from '../firebase/firebase.service';
 import { CreateVacancyDto, VacancyStatus, Modalidad, Prioridad, Jornada } from './dto/create-vacancy.dto';
@@ -85,22 +82,22 @@ export class VacanciesService {
 
     async findAllVacanciesByRecruiter(userId: string) {
         const vacanciesSnapshot = await this.collection
-          .where('userId', '==', userId)
-          .get();
-      
+            .where('userId', '==', userId)
+            .get();
+
         if (vacanciesSnapshot.empty) {
-          throw new NotFoundException('Vacantes no encontradas');
+            throw new NotFoundException('Vacantes no encontradas');
         }
-      
+
         const vacancies = vacanciesSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
+            id: doc.id,
+            ...doc.data()
         }));
-      
+
         return vacancies;
     }
 
-    async update(id: string, dto: UpdateVacancyDto, userId: string) {
+    async update(id: string, dto: UpdateVacancyDto, userId: string, isAdmin: boolean) {
         const docRef = this.collection.doc(id);
         const doc = await docRef.get();
 
@@ -110,7 +107,7 @@ export class VacanciesService {
 
         const vacancy = doc.data();
 
-        if (vacancy.userId !== userId) {
+        if (vacancy.userId !== userId && !isAdmin) {
             throw new ForbiddenException('No tienes permiso para actualizar esta vacante');
         }
 
@@ -123,7 +120,7 @@ export class VacanciesService {
         return { id, message: 'Vacante actualizada correctamente' };
     }
 
-    async delete(id: string, userId: string) {
+    async delete(id: string, userId: string, isAdmin: boolean) {
         const docRef = this.collection.doc(id);
         const doc = await docRef.get();
 
@@ -133,7 +130,7 @@ export class VacanciesService {
 
         const vacancy = doc.data();
 
-        if (vacancy.userId !== userId) {
+        if (vacancy.userId !== userId && !isAdmin) {
             throw new ForbiddenException('No tienes permiso para eliminar esta vacante');
         }
 
