@@ -34,7 +34,6 @@ export class ApplicationController {
           email: "maria@example.com",
           phone: "+51987654321",
           cvUrl: "https://bucket.example.com/cv_maria.pdf",
-          skills: ["JavaScript", "TypeScript", "NestJS"],
           status: "Recibido"
         }
       }
