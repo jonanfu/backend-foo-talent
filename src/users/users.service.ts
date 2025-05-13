@@ -53,22 +53,18 @@ export class UsersService {
 
   async updateUser(uid: string, dto: UpdateUserDto) {
     try {
-      // 1. Validar photoURL si está presente
       if (dto.photoUrl && !this.isValidHttpUrl(dto.photoUrl)) {
         throw new BadRequestException('La URL de la foto no es válida');
       }
 
-      // 2. Crear objeto de actualización dinámico
       const updateData: Record<string, any> = {};
 
-      // 3. Mapear solo los campos proporcionados
       if (dto.email !== undefined) updateData.email = dto.email;
       if (dto.displayName !== undefined) updateData.displayName = dto.displayName;
       if (dto.phoneNumber !== undefined) updateData.phoneNumber = dto.phoneNumber;
       if (dto.photoUrl !== undefined) updateData.photoURL = dto.photoUrl;
       if (dto.disabled !== undefined) updateData.disabled = dto.disabled;
 
-      // 4. Ejecutar actualización en Firebase Auth
       await this.firebaseService.getAuth().updateUser(uid, updateData);
 
       return {
@@ -84,12 +80,9 @@ export class UsersService {
 
   async deleteUser(uid: string) {
     try {
-      // Opcional: Eliminar la foto de Storage si es una URL personalizada
-      // await this.deleteUserPhotoIfCustom(uid);
 
       await this.firebaseService.getAuth().deleteUser(uid);
 
-      // Opcional: Eliminar datos de Firestore
       const db = this.firebaseService.getFirestore();
       await db.collection('users').doc(uid).delete();
 
@@ -116,7 +109,6 @@ export class UsersService {
     return { message: 'Contraseña actualizada', uid };
   }
 
-  // --- Métodos auxiliares ---
   private isValidHttpUrl(url: string): boolean {
     try {
       const newUrl = new URL(url);
@@ -153,7 +145,6 @@ export class UsersService {
         const bucket = this.firebaseService.getBucket();
         const file = bucket.file('default-avatars/default-avatar.png');
 
-        //Verificar que el archivo existe
         const [exists] = await file.exists();
 
         if (exists) {
@@ -164,7 +155,6 @@ export class UsersService {
 
           this.defaultAvatarUrl = url;
         } else {
-          //Fallback si no existe la imagen
           this.defaultAvatarUrl = 'https://via.placeholder.com/150';
         }
 

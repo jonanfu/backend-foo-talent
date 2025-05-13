@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { FirebaseService } from '../firebase/firebase.service'; // Ajusta la ruta según tu estructura
+import { FirebaseService } from '../firebase/firebase.service'; 
 import { AvatarService } from './services/avatar.service';
 
 @Injectable()
@@ -16,7 +16,6 @@ export class AuthService {
   ) {
     const auth = this.firebaseService.getAuth();
 
-    // Asignar avatar por defecto si no se proporciona
     let finalPhotoUrl = photoUrl;
     if (!finalPhotoUrl) {
       finalPhotoUrl = await this.avatarService.generateAvatarFromName(displayName);
