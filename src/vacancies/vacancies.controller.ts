@@ -60,7 +60,8 @@ export class VacanciesController {
     }
 
     @Patch(':id')
-    @UseGuards(JwtAuthGuard)
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('admin', 'user')
     @ApiOperation({ summary: 'Actualizar vacante por ID (dueño o admin)' })
     @ApiParam({ name: 'id', description: 'ID de la vacante' })
     @ApiBody({
@@ -81,8 +82,7 @@ export class VacanciesController {
     @ApiResponse({ status: 404, description: 'Vacante no encontrada' })
     async update(@Param('id') id: string, @Body() dto: UpdateVacancyDto, @Req() req: any) {
         const userId = req.user.uid;
-        const isAdmin = req.user.role === 'admin';
-        return this.vacanciesService.update(id, dto, userId, isAdmin);
+        return this.vacanciesService.update(id, dto, userId);
     }
 
     @Get()
