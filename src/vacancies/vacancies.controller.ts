@@ -112,7 +112,8 @@ export class VacanciesController {
     }
 
     @Delete(':id')
-    @UseGuards(JwtAuthGuard)
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('admin', 'user')
     @ApiOperation({ summary: 'Eliminar vacante por ID (dueño o admin)' })
     @ApiParam({ name: 'id', description: 'ID de la vacante' })
     @ApiResponse({ status: 200, description: 'Vacante eliminada', type: Object, example: { id: 'abc123', message: 'Vacante eliminada correctamente' } })
@@ -121,7 +122,6 @@ export class VacanciesController {
     @ApiResponse({ status: 404, description: 'Vacante no encontrada' })
     async delete(@Param('id') id: string, @Req() req: any) {
         const userId = req.user.uid;
-        const isAdmin = req.user.role === 'admin';
-        return this.vacanciesService.delete(id, userId, isAdmin);
+        return this.vacanciesService.delete(id, userId);
     }
 }

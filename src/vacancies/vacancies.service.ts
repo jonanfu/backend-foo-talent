@@ -100,7 +100,7 @@ export class VacanciesService {
         return vacancies;
     }
 
-    async update(id: string, dto: UpdateVacancyDto, userId: string, isAdmin: boolean) {
+    async update(id: string, dto: UpdateVacancyDto, userId: string) {
         const docRef = this.collection.doc(id);
         const doc = await docRef.get();
 
@@ -110,7 +110,7 @@ export class VacanciesService {
 
         const vacancy = doc.data();
 
-        if (!isAdmin && vacancy.userId !== userId) {
+        if (vacancy.userId !== userId) {
             throw new ForbiddenException('No tienes permiso para actualizar esta vacante');
         }
 
@@ -123,7 +123,7 @@ export class VacanciesService {
         return { id, message: 'Vacante actualizada correctamente' };
     }
 
-    async delete(id: string, userId: string, isAdmin: boolean) {
+    async delete(id: string, userId: string) {
         const docRef = this.collection.doc(id);
         const doc = await docRef.get();
 
@@ -133,7 +133,7 @@ export class VacanciesService {
 
         const vacancy = doc.data();
 
-        if (!isAdmin && vacancy.userId !== userId) {
+        if (vacancy.userId !== userId) {
             throw new ForbiddenException('No tienes permiso para eliminar esta vacante');
         }
 
