@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { Roles } from 'src/auth/decorators/roles.decorator';
+import {UpdatePasswordDto} from './dto/update-password.dto';
 import { UpdateUserRoleDto } from './dto/update-role.dto';
 import {
   ApiBearerAuth,
@@ -72,14 +73,13 @@ export class UsersController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin', 'superadmin')
   @ApiOperation({ summary: 'Cambiar contraseña del usuario (Firebase)' })
-  @ApiBody({ schema: { properties: { password: { type: 'string' } } } })
   async updatePassword(
     @Param('uid') uid: string,
-    @Body() body: { password: string },
+    @Body() body: UpdatePasswordDto,
   ) {
     return this.usersService.updatePassword(uid, body.password);
   }
-
+  
   @Delete(':uid')
   @ApiParam({
     name: 'uid',
