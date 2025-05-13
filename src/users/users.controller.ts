@@ -30,6 +30,11 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get()
+<<<<<<< HEAD
+=======
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+>>>>>>> 87dd688486057ad7bfe29880dbdad02fa4a3012a
   @ApiOperation({ summary: 'Listar todos los usuarios (solo admin)' })
   @ApiResponse({ status: 200, description: 'Lista de usuarios' })
   @ApiResponse({ status: 403, description: 'No tienes permiso' })
@@ -38,6 +43,11 @@ export class UsersController {
   }
 
   @Get(':uid')
+<<<<<<< HEAD
+=======
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+>>>>>>> 87dd688486057ad7bfe29880dbdad02fa4a3012a
   @ApiOperation({ summary: 'Obtener un usuario por UID (solo admin)' })
   @ApiResponse({ status: 200, description: 'Datos del usuario' })
   @ApiResponse({ status: 403, description: 'No tienes permiso' })

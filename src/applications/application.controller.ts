@@ -34,7 +34,6 @@ export class ApplicationController {
           email: "maria@example.com",
           phone: "+51987654321",
           cvUrl: "https://bucket.example.com/cv_maria.pdf",
-          skills: ["JavaScript", "TypeScript", "NestJS"],
           status: "Recibido"
         }
       }
@@ -58,6 +57,15 @@ export class ApplicationController {
     return this.applicationService.findAll(vacancyId, status, Number(page), Number(limit));
   }
 
+  @Get(':userId')
+  @ApiOperation({ summary: 'Retorna todas las aplicaciones por usuariop'})
+  @ApiParam({ name: 'userId', description: 'Id del usuario'})
+  @ApiResponse({ status: 200, description: "Postulaciones encontradas"})
+  @ApiResponse({ status: 404, description: 'Postulaciones no encontradas'})
+  async applicationsByRecruiter(@Param('userId') userId: string){
+    return await this.applicationService.findAllApplicationsByRecruiter(userId);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: "Retorna el detalle de una aplicación" })
   @ApiParam({ name: 'id', description: 'ID de la vacante' })
@@ -73,9 +81,8 @@ export class ApplicationController {
   @ApiOperation({ summary: 'Actualizar estado de una postulación' })
   @ApiParam({ name: 'id', description: 'ID de la postulación' })
   @ApiResponse({ status: 200, description: 'Estado actualizado' })
-
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('admin')
+  @Roles('admin', 'user')
   updateStatus(
     @Param('id') id: string,
     @Body() dto: UpdateStatusDto,
