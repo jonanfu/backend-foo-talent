@@ -24,7 +24,7 @@ export class ApplicationService {
     private vacancyService: VacanciesService
 
   ) {
-    this.collection = this.firebaseService.getFirestore().collection('applications');
+    this.collection = this.firebaseService.getFirestore().collection('programadores');
   }
 
   async create(dto: CreateApplicationDto) {
@@ -43,7 +43,7 @@ export class ApplicationService {
   async findAll(vacancyId: string, status?: ApplicationStatus, page = 1, limit = 10) {
     let query = this.collection
       .where('vacancyId', '==', vacancyId)
-      .orderBy('createdAt', 'desc');
+    //  .orderBy('createdAt', 'desc');
 
     if (status) {
       query = query.where('status', '==', status);
