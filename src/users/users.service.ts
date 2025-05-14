@@ -99,23 +99,6 @@ export class UsersService {
     }
   }
 
-  async disableUser(uid: string) {
-    await this.firebaseService.getAuth().updateUser(uid, { disabled: true });
-    return { message: 'Usuario deshabilitado' };
-  }
-
-  async enableUser(uid: string) {
-    await this.firebaseService.getAuth().updateUser(uid, { disabled: false });
-    return { message: 'Usuario habilitado' };
-  }
-
-  async updatePassword(uid: string, newPassword: string) {
-    await this.firebaseService.getAuth().updateUser(uid, {
-      password: newPassword,
-    });
-    return { message: 'Contraseña actualizada', uid };
-  }
-
   // --- Métodos auxiliares ---
   private isValidHttpUrl(url: string): boolean {
     try {

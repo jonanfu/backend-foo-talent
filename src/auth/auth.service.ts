@@ -72,4 +72,15 @@ export class AuthService {
       throw new Error(`No se pudo generar el enlace: ${error.message}`);
     }
   }
+
+  async updatePassword(uid: string, newPassword: string) {
+    try {
+      await this.firebaseService.getAuth().updateUser(uid, {
+        password: newPassword,
+      });
+      return { message: 'Contraseña actualizada', uid };
+    } catch (error) {
+      throw new Error(`Error al actualizar contraseña: ${error.message}`);
+    }
+  }
 } 
