@@ -68,17 +68,6 @@ export class UsersController {
     return this.usersService.updateUser(uid, data);
   }
 
-  @Patch(':uid/password')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('admin', 'superadmin')
-  @ApiOperation({ summary: 'Cambiar contraseña del usuario (Firebase)' })
-  @ApiBody({ schema: { properties: { password: { type: 'string' } } } })
-  async updatePassword(
-    @Param('uid') uid: string,
-    @Body() body: { password: string },
-  ) {
-    return this.usersService.updatePassword(uid, body.password);
-  }
 
   @Delete(':uid')
   @ApiParam({
@@ -92,21 +81,5 @@ export class UsersController {
   async deleteUser(@Param('uid') uid: string) {
     return this.usersService.deleteUser(uid);
   }  
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @ApiOperation({ summary: 'Desactivar un usuario (solo admin)' })
-  @Roles('admin')
-  @Patch('disable/:uid')
-  async disable(@Param('uid') uid: string) {
-    await this.usersService.disableUser(uid);
-    return { message: 'Usuario desactivado' };
-  }
-
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @ApiOperation({ summary: 'Activar un usuario (solo admin)' })
-  @Roles('admin')
-  @Patch('enable/:uid')
-  async enable(@Param('uid') uid: string) {
-    await this.usersService.enableUser(uid);
-    return { message: 'Usuario re-activado' };
-  }
+  
 }

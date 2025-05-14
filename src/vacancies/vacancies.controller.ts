@@ -82,7 +82,8 @@ export class VacanciesController {
     @ApiResponse({ status: 404, description: 'Vacante no encontrada' })
     async update(@Param('id') id: string, @Body() dto: UpdateVacancyDto, @Req() req: any) {
         const userId = req.user.uid;
-        return this.vacanciesService.update(id, dto, userId);
+        const isAdmin = req.user.role === 'admin';
+        return this.vacanciesService.update(id, dto, userId, isAdmin);
     }
 
     @Get()
@@ -122,6 +123,7 @@ export class VacanciesController {
     @ApiResponse({ status: 404, description: 'Vacante no encontrada' })
     async delete(@Param('id') id: string, @Req() req: any) {
         const userId = req.user.uid;
-        return this.vacanciesService.delete(id, userId);
+        const isAdmin = req.user.role === 'admin';
+        return this.vacanciesService.delete(id, userId, isAdmin);
     }
 }
