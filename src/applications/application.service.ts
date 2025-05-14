@@ -40,6 +40,21 @@ export class ApplicationService {
     };
   }
 
+  async findAllApplications(status?: ApplicationStatus, page = 1, limit = 10) {
+    let query = this.collection.orderBy('createdAt', 'desc');
+
+    if (status) {
+      query = query.where('status', '==', status);
+    }
+
+    const snapshot = await query
+      .offset((page - 1) * limit)
+      .limit(limit)
+      .get();
+
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  }
+
   async findAll(vacancyId: string, status?: ApplicationStatus, page = 1, limit = 10) {
     let query = this.collection
       .where('vacancyId', '==', vacancyId)
@@ -59,28 +74,28 @@ export class ApplicationService {
 
   async findAllApplicationsByRecruiter(userId: string) {
     const vacancies = await this.vacancyService.findAllVacanciesByRecruiter(userId);
-    
-    const allApplications:any = [];
-  
+
+    const allApplications: any = [];
+
     for (const vacancy of vacancies) {
       const applicationsSnapshot = await this.collection
         .where('vacancyId', '==', vacancy.id)
         .get();
-  
+
       if (!applicationsSnapshot.empty) {
         const applications = applicationsSnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
         }));
-        
+
         allApplications.push(...applications);
       }
     }
-  
+
     if (allApplications.length === 0) {
       throw new NotFoundException('No se encontraron aplicaciones para las vacantes de este reclutador');
     }
-  
+
     return allApplications;
   }
 
