@@ -7,14 +7,22 @@ import {
   ValidationPipe,
   Get,
   Query,
+  Param,
+  Patch,
+  UseGuards,
 
 } from '@nestjs/common';
+import { ApiBearerAuth } from '@nestjs/swagger';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { CreateUserDto } from './dto/create-user.dto';
 import { AuthService } from './auth.service';
+import { Roles } from './decorators/roles.decorator';
+import { JwtAuthGuard } from './guards/jwt.guard';
+import { RolesGuard } from './guards/roles.guard';
 
 
 @ApiTags('Auth')
+@ApiBearerAuth('access-token')
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) { }
@@ -83,6 +91,18 @@ export class AuthController {
     } catch (error) {
       throw new BadRequestException(error.message);
     }
+  }
+
+  @Patch(':uid/password')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  @ApiOperation({ summary: 'Cambiar contraseña del usuario (Firebase)' })
+  @ApiBody({ schema: { properties: { password: { type: 'string' } } } })
+  async updatePassword(
+    @Param('uid') uid: string,
+    @Body() body: { password: string },
+  ) {
+    return this.authService.updatePassword(uid, body.password);
   }
 
 }
