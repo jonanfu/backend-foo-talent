@@ -24,7 +24,7 @@ export class ApplicationService {
     private vacancyService: VacanciesService
 
   ) {
-    this.collection = this.firebaseService.getFirestore().collection('programadores');
+    this.collection = this.firebaseService.getFirestore().collection('applications');
   }
 
   async create(dto: CreateApplicationDto) {

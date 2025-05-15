@@ -3,9 +3,11 @@ import { RecluitmentController } from "./recruitment.controller";
 import { RecluitmentService } from "./recruitment.service";
 import { Module } from "@nestjs/common";
 import { PineconeService } from "./pinecone.service";
+import { NotificationModule } from "src/notifications/notification.module";
+import { VacanciesModule } from "src/vacancies/vacancies.module";
 
 @Module({
-    imports: [FirebaseModule],
+    imports: [FirebaseModule, NotificationModule, VacanciesModule],
     providers: [RecluitmentService, PineconeService],
     controllers: [RecluitmentController]
   })

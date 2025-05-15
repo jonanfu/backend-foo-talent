@@ -1,5 +1,5 @@
 import { ValidationPipe } from '@nestjs/common';
-import { NestFactory, Reflector } from '@nestjs/core';
+import { NestFactory} from '@nestjs/core';
 import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { json, urlencoded } from 'express'
@@ -14,10 +14,10 @@ async function bootstrap() {
   app.use(urlencoded( { extended: true, limit: '10mb'}));
 
   const config = new DocumentBuilder()
-  .setTitle('Tasks example')
-  .setDescription('The tasks example')
+  .setTitle('Api Talent Match')
+  .setDescription('Documentación de la api de Talent Match')
   .setVersion('1.0')
-  .addTag('tasks')
+  .addTag('Talent Match')
   .addBearerAuth(
     {
       type: 'http',

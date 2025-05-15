@@ -11,6 +11,11 @@ export class RecluitmentController {
         return this.recruitmentService.saveData();
     }
 
+    @Post("delete")
+    async deleteData() {
+        return await this.recruitmentService.deleteAll();
+    }
+
     
     @Post("result_vacancies")
     async preselection(): Promise<PreselectionResult> {

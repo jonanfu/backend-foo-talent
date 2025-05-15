@@ -4,8 +4,10 @@ import * as fs from 'fs';
 const PdfParse = require('pdf-parse');
 import axios from "axios";
 import { PineconeService } from "./pinecone.service";
-import { ConfigService } from "@nestjs/config";
 import { ApplicationStatus } from "src/applications/enums/application-status.enum";
+import { EmailService } from "src/notifications/email.service";
+import { NotificationService } from "src/notifications/notification.service";
+import { VacanciesService } from "src/vacancies/vacancies.service";
 
 export interface BatchResult {
     id: string;
@@ -32,7 +34,8 @@ export class RecluitmentService {
     constructor(
         private firebaseService: FirebaseService,
         private pineconeService: PineconeService,
-        private configService: ConfigService
+        private notificationService: NotificationService,
+        private vacancyService: VacanciesService
     ) {
         this.collectionProgramdores = this.firebaseService.getFirestore().collection('programadores');
         this.collectionApplications = this.firebaseService.getFirestore().collection('applications');
@@ -82,25 +85,22 @@ export class RecluitmentService {
             const vectorStore = await this.pineconeService.getVectorStore("cv-index");
             
             // 2. Obtener información de la vacante
-            const vacancyQuery = await this.collectionVacancies
-                .doc(vacancyId)
-                .get();
-          
-            if (vacancyQuery.empty) {
+            const vacancyDoc = await this.collectionVacancies.doc(vacancyId).get();
+            if (!vacancyDoc.exists) {
                 throw new Error(`No se encontró la vacante con ID: ${vacancyId}`);
             }
-          
-            const vacancyData = vacancyQuery.data();
+            
+            const vacancyData = vacancyDoc.data();
             const vacancyDescription = `${vacancyData.descripcion || ''}\n\nResponsabilidades:\n${vacancyData.responsabilidades || ''}`;
     
             // 3. Obtener el total de aplicaciones
-            const countQuery = this.collectionProgramdores
+            const query = this.collectionProgramdores
                 .where("vacancyId", '==', vacancyId)
                 .where("status", "==", ApplicationStatus.RECEIVED)
                 .limit(options.maxApplications);
             
-            const totalSnapshot = await countQuery.get();
-            const totalApplications = totalSnapshot.size;
+            const snapshot = await query.get();
+            const totalApplications = snapshot.size;
             
             if (totalApplications === 0) {
                 return {
@@ -114,85 +114,66 @@ export class RecluitmentService {
                 };
             }
     
-            // 4. Procesamiento por lotes
-            const allBatches: BatchResult[] = [];
-            let processedCount = 0;
-            let lastDoc = null;
+            // 4. Procesar todos los CVs sin cambiar el estado
+            const allCandidates = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data(),
+                docRef: doc.ref
+            }));
     
-            while (processedCount < totalApplications) {
-                // Obtener el siguiente lote
-                let batchQuery = this.collectionProgramdores
-                    .where("vacancyId", '==', vacancyId)
-                    .where("status", "==", ApplicationStatus.RECEIVED)
-                    .limit(options.batchSize);
-    
-                if (lastDoc) {
-                    batchQuery = batchQuery.startAfter(lastDoc);
-                }
-    
-                const batchSnapshot = await batchQuery.get();
+            // Procesar en lotes para evitar sobrecarga
+            const batchSize = options.batchSize || 10;
+            const batches: BatchResult[] = [];
+            
+            for (let i = 0; i < allCandidates.length; i += batchSize) {
+                const batch = allCandidates.slice(i, i + batchSize);
+                const batchResults = await this.processBatch(batch, vacancyId, vectorStore, false);
+                batches.push(...batchResults);
                 
-                if (batchSnapshot.empty) break;
-    
-                // Procesar el lote actual
-                const batchApplications = batchSnapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data(),
-                    docRef: doc.ref
-                }));
-    
-                const batchResults = await this.processBatch(
-                    batchApplications, 
-                    vacancyId, 
-                    vectorStore
-                );
-    
-                allBatches.push(...batchResults);
-                processedCount += batchApplications.length;
-                lastDoc = batchSnapshot.docs[batchSnapshot.docs.length - 1];
-    
-                // Delay entre lotes
-                if (processedCount < totalApplications) {
-                    await new Promise(resolve => 
-                        setTimeout(resolve, options.delayBetweenBatches)
-                    );
+                if (i + batchSize < allCandidates.length) {
+                    await new Promise(resolve => setTimeout(resolve, options.delayBetweenBatches || 1000));
                 }
             }
     
             // 5. Buscar los mejores candidatos
             const results = await vectorStore.similaritySearchWithScore(vacancyDescription, limit);
+            const selectedIds = results.map(([doc]) => doc.metadata.candidateId);
     
-            // 6. Actualizar estado de los candidatos seleccionados
-            const updatePromises = results.map(async ([document]) => {
-                const candidateId = document.metadata.candidateId;
-                const docRef = this.collectionProgramdores.doc(candidateId);
-                
-                try {
-                    await docRef.update({
+            // 6. Actualizar estados y enviar correos
+            const updatePromises = allCandidates.map(async candidate => {
+                if (selectedIds.includes(candidate.id)) {
+                    // Candidato seleccionado
+                    await candidate.docRef.update({
                         status: ApplicationStatus.IN_REVIEW,
                         lastProcessedAt: new Date().toISOString()
                     });
-                
-                } catch (error) {
-                    console.error(`Error updating candidate ${candidateId}:`, error);
+                } else {
+                    // Candidato descartado
+                    await candidate.docRef.update({
+                        status: ApplicationStatus.DISCARDED,
+                        lastProcessedAt: new Date().toISOString()
+                    });
+                   this.notificationService.sendRejectionEmail(candidate.email, "Programador")
+
                 }
             });
     
-            await Promise.all(updatePromises);
+            await Promise.all(updatePromises); 
     
             // 7. Generar reporte final
-            const successfulCount = allBatches.filter(r => r.success).length;
-            const failureCount = allBatches.filter(r => !r.success).length;
-    
+            const successfulCount = batches.filter(r => r.success).length;
+            const failureCount = batches.filter(r => !r.success).length;
+
+
+            //this.vacancyService.update(vacancyId, {status: .})
             return {
                 success: true,
                 vacancyId,
                 totalApplications,
-                processedCount,
+                processedCount: allCandidates.length,
                 successfulCount,
                 failureCount,
-                batches: allBatches,
-                
+                batches,
             };
     
         } catch (error) {
@@ -209,11 +190,19 @@ export class RecluitmentService {
         }
     }
     
-    private async processBatch(applications: any[], vacancyId: string, vectorStore: any) {
+    
+    private async processBatch(applications: any[], vacancyId: string, vectorStore: any, updateStatus = false) {
         return Promise.all(
             applications.map(async (app) => {
                 try {
                     if (!app.cvPath) {
+                        if (updateStatus) {
+                            await app.docRef.update({
+                                status: ApplicationStatus.DISCARDED,
+                                lastProcessedAt: new Date().toISOString(),
+                                rejectionReason: "No tiene CV"
+                            });
+                        }
                         return { id: app.id, success: false, error: "No tiene CV" };
                     }
     
@@ -233,21 +222,22 @@ export class RecluitmentService {
                         [app.id]
                     );
     
-                    // Actualizar Firestore
-                    await app.docRef.update({
-                        cvProcessed: true,
-                        lastProcessedAt: new Date().toISOString(),
-                        processingStatus: "completed",
-                        status: ApplicationStatus.DISCARDED
-                    });
+                    if (updateStatus) {
+                        await app.docRef.update({
+                            cvProcessed: true,
+                            lastProcessedAt: new Date().toISOString()
+                        });
+                    }
     
                     return { id: app.id, success: true };
     
                 } catch (error) {
-                    await app.docRef.update({
-                        processingStatus: "failed",
-                        error: error.message.substring(0, 500)
-                    });
+                    if (updateStatus) {
+                        await app.docRef.update({
+                            processingStatus: "failed",
+                            error: error.message.substring(0, 500)
+                        });
+                    }
                     
                     return { 
                         id: app.id, 
