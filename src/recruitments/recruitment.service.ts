@@ -5,9 +5,9 @@ const PdfParse = require('pdf-parse');
 import axios from "axios";
 import { PineconeService } from "./pinecone.service";
 import { ApplicationStatus } from "src/applications/enums/application-status.enum";
-import { EmailService } from "src/notifications/email.service";
 import { NotificationService } from "src/notifications/notification.service";
 import { VacanciesService } from "src/vacancies/vacancies.service";
+import { VacancyStatus } from "src/vacancies/dto/create-vacancy.dto";
 
 export interface BatchResult {
     id: string;
@@ -69,6 +69,22 @@ export class RecluitmentService {
         await batch.commit();
 
         return "Todos los documentos han sido eliminados.";
+    }
+
+    async getAllProgramadores() {
+        const snapshot = await this.collectionProgramdores.get(); // Obtiene todos los documentos
+    
+        if (snapshot.empty) {
+          return []; // Si no hay documentos, retorna un arreglo vacío
+        }
+    
+        // Mapea los documentos a un array de objetos con sus datos e ID
+        const programadores = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+    
+        return programadores;
     }
 
     async preselection(vacancyId: string, limit: number, options: { 
@@ -136,7 +152,11 @@ export class RecluitmentService {
             }
     
             // 5. Buscar los mejores candidatos
-            const results = await vectorStore.similaritySearchWithScore(vacancyDescription, limit);
+            const results = await vectorStore.similaritySearchWithScore(
+                vacancyDescription,
+                limit,
+                { filter: { vacancyId: vacancyId }}
+                );
             const selectedIds = results.map(([doc]) => doc.metadata.candidateId);
     
             // 6. Actualizar estados y enviar correos
@@ -153,7 +173,7 @@ export class RecluitmentService {
                         status: ApplicationStatus.DISCARDED,
                         lastProcessedAt: new Date().toISOString()
                     });
-                   this.notificationService.sendRejectionEmail(candidate.email, "Programador")
+                   this.notificationService.sendRejectionEmail(candidate.email, vacancyData.puesto)
 
                 }
             });
@@ -165,7 +185,7 @@ export class RecluitmentService {
             const failureCount = batches.filter(r => !r.success).length;
 
 
-            //this.vacancyService.update(vacancyId, {status: .})
+            this.vacancyService.update(vacancyId, {estado: VacancyStatus.CLOSED}, vacancyData.userId, true);
             return {
                 success: true,
                 vacancyId,

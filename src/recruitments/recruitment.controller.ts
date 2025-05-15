@@ -16,6 +16,11 @@ export class RecluitmentController {
         return await this.recruitmentService.deleteAll();
     }
 
+    @Post('obtener_data')
+    async obtenerData() {
+        return this.recruitmentService.getAllProgramadores()
+    }
+
     
     @Post("result_vacancies")
     async preselection(): Promise<PreselectionResult> {
