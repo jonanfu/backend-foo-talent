@@ -31,7 +31,7 @@ export class ApplicationService {
     const doc = await this.collection.add({
       ...dto,
       status: dto.status ?? ApplicationStatus.RECEIVED,
-      cvPath: dto.cvUrl,
+      cvUrl: dto.cvUrl,
       createdAt: FieldValue.serverTimestamp(),
     });
 
@@ -58,7 +58,7 @@ export class ApplicationService {
   async findAll(vacancyId: string, status?: ApplicationStatus, page = 1, limit = 10) {
     let query = this.collection
       .where('vacancyId', '==', vacancyId)
-    //  .orderBy('createdAt', 'desc');
+      .orderBy('createdAt', 'desc');
 
     if (status) {
       query = query.where('status', '==', status);
