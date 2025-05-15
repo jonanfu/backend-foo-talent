@@ -4,6 +4,8 @@ import { EmailDto } from './dto/email.dto';
 import { PushDto } from './dto/push.dto';
 import { ConfigService } from '@nestjs/config';
 import { FirebaseService } from '../firebase/firebase.service'; 
+import { EmailService } from './email.service';
+import { TemplateService } from './template.service';
 
 @Injectable()
 export class NotificationService {
@@ -13,6 +15,8 @@ export class NotificationService {
   constructor(
     private readonly configService: ConfigService,
     private readonly firebaseService: FirebaseService,
+    private readonly emailService: EmailService,
+    private readonly templateService: TemplateService
   ) {
     this.transporter = nodemailer.createTransport({
       service: 'gmail',
@@ -36,6 +40,32 @@ export class NotificationService {
       this.logger.log(`Correo enviado a ${to}`);
     } catch (error) {
       this.logger.error('Error enviando correo:', error.message);
+      throw error;
+    }
+  }
+
+  async sendRejectionEmail(email: string, vacancyTitle: string): Promise<void> {
+    try {
+      // Renderizar la plantilla con los datos necesarios
+      const html = await this.templateService.renderTemplate('rejection', {
+        title: `Estado de tu postulación a ${vacancyTitle}`,
+        header: 'Estado de tu postulación',
+        message1: `Lamentamos informarte que después de revisar tu aplicación para ${vacancyTitle}, no podremos avanzar con tu candidatura en esta ocasión.`,
+        message2: 'Agradecemos tu interés y te animamos a aplicar a otras vacantes que publiquemos en el futuro.',
+        showButton: true,
+        buttonText: 'Ver otras oportunidades',
+        buttonLink: 'https://tuempresa.com/carreras',
+        year: new Date().getFullYear()
+      });
+
+      // Enviar el correo a través del servicio
+      await this.emailService.sendEmail({
+        to: email,
+        subject: `Actualización sobre ${vacancyTitle}`,
+        html
+      });
+    } catch (error) {
+      console.error(`Error al enviar correo de rechazo a ${email}:`, error);
       throw error;
     }
   }

@@ -1,9 +1,7 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { FirebaseService } from '../firebase/firebase.service';
-import { CreateVacancyDto, Modalidad, Prioridad } from './dto/create-vacancy.dto';
+import { CreateVacancyDto, VacancyStatus, Modalidad, Prioridad, Jornada } from './dto/create-vacancy.dto';
 import { UpdateVacancyDto } from './dto/update-vacancy.dto';
-import { VacancyStatus } from './dto/create-vacancy.dto';
-import { v4 as uuid } from 'uuid';
 import { FieldValue } from 'firebase-admin/firestore';
 
 @Injectable()
@@ -15,27 +13,30 @@ export class VacanciesService {
     }
 
     async create(dto: CreateVacancyDto, userId: string) {
-        const imageUrl = dto.image || '';
-
+        // La fecha se asigna solo si no está definida en el DTO
         const fechaActual = dto.fecha || new Date().toISOString().split('T')[0];
 
-        const doc = await this.collection.add({
+        const vacancyData = {
             ...dto,
             userId,
-            imageUrl,
             fecha: fechaActual,
-            estado: dto.estado || VacancyStatus.ACTIVE,
             createdAt: FieldValue.serverTimestamp(),
-            ubicacion: dto.ubicacion || '',
-            modalidad: dto.modalidad || Modalidad.PRESENCIAL,
-            prioridad: dto.prioridad || Prioridad.ALTA,
-        });
+        };
 
+        const doc = await this.collection.add(vacancyData);
         return { id: doc.id };
     }
 
-
-    async findAll(status?: VacancyStatus, search = '', page = 1, limit = 10, modalidad?: string, prioridad?: string, ubicacion?: string) {
+    async findAll(
+        status?: VacancyStatus,
+        search = '',
+        page = 1,
+        limit = 10,
+        modalidad?: Modalidad,
+        prioridad?: Prioridad,
+        ubicacion?: string,
+        jornada?: Jornada,
+    ) {
         let query = this.collection as FirebaseFirestore.Query;
 
         // Filtros dinámicos
@@ -55,10 +56,14 @@ export class VacanciesService {
             query = query.where('ubicacion', '==', ubicacion);
         }
 
+        if (jornada) {
+            query = query.where('jornada', '==', jornada);
+        }
+
         if (search) {
             query = query
-                .where('nombre', '>=', search)
-                .where('nombre', '<=', search + '\uf8ff');
+                .where('puesto', '>=', search)
+                .where('puesto', '<=', search + '\uf8ff');
         }
 
         query = query.orderBy('createdAt', 'desc');
@@ -67,13 +72,29 @@ export class VacanciesService {
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     }
 
-
     async findOne(id: string) {
         const doc = await this.collection.doc(id).get();
         if (!doc.exists) {
             throw new NotFoundException(`La vacante con ID ${id} no existe`);
         }
         return { id: doc.id, ...doc.data() };
+    }
+
+    async findAllVacanciesByRecruiter(userId: string) {
+        const vacanciesSnapshot = await this.collection
+            .where('userId', '==', userId)
+            .get();
+
+        if (vacanciesSnapshot.empty) {
+            throw new NotFoundException('Vacantes no encontradas');
+        }
+
+        const vacancies = vacanciesSnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+
+        return vacancies;
     }
 
     async update(id: string, dto: UpdateVacancyDto, userId: string, isAdmin: boolean) {
@@ -86,7 +107,7 @@ export class VacanciesService {
 
         const vacancy = doc.data();
 
-        if (!isAdmin && vacancy.userId !== userId) {
+        if (vacancy.userId !== userId && !isAdmin) {
             throw new ForbiddenException('No tienes permiso para actualizar esta vacante');
         }
 
@@ -96,7 +117,6 @@ export class VacanciesService {
         };
 
         await docRef.update(updateData);
-
         return { id, message: 'Vacante actualizada correctamente' };
     }
 
@@ -110,13 +130,11 @@ export class VacanciesService {
 
         const vacancy = doc.data();
 
-        // Verificar si el usuario es dueño o admin
-        if (!isAdmin && vacancy.userId !== userId) {
+        if (vacancy.userId !== userId && !isAdmin) {
             throw new ForbiddenException('No tienes permiso para eliminar esta vacante');
         }
 
         await docRef.delete();
         return { id, message: 'Vacante eliminada correctamente' };
     }
-
 }

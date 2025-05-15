@@ -3,7 +3,6 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { FirebaseService } from 'src/firebase/firebase.service';
 import { UpdateUserRoleDto } from './dto/update-role.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import * as admin from 'firebase-admin';
 
 @Injectable()
 export class UsersService {
@@ -54,46 +53,31 @@ export class UsersService {
 
   async updateUser(uid: string, dto: UpdateUserDto) {
     try {
-      // 1. Obtener usuario actual
-      const currentUser = await this.firebaseService.getAuth().getUser(uid);
-
-      // 2. Validar photoURL solo si viene en el DTO
+      // 1. Validar photoURL si está presente
       if (dto.photoUrl && !this.isValidHttpUrl(dto.photoUrl)) {
-        throw new BadRequestException('URL de foto inválida');
+        throw new BadRequestException('La URL de la foto no es válida');
       }
 
-      // 3. Crear objeto de actualización combinando campos
-      const updateData: Partial<admin.auth.UpdateRequest> = {};
+      // 2. Crear objeto de actualización dinámico
+      const updateData: Record<string, any> = {};
 
-      // Solo actualizar campos presentes en el DTO
+      // 3. Mapear solo los campos proporcionados
       if (dto.email !== undefined) updateData.email = dto.email;
       if (dto.displayName !== undefined) updateData.displayName = dto.displayName;
       if (dto.phoneNumber !== undefined) updateData.phoneNumber = dto.phoneNumber;
       if (dto.photoUrl !== undefined) updateData.photoURL = dto.photoUrl;
       if (dto.disabled !== undefined) updateData.disabled = dto.disabled;
 
-      // 4. Actualizar en Firebase Auth
+      // 4. Ejecutar actualización en Firebase Auth
       await this.firebaseService.getAuth().updateUser(uid, updateData);
-
-      // 5. Actualizar Firestore solo con campos modificados
-      const db = this.firebaseService.getFirestore();
-      if (Object.keys(dto).length > 0) {
-        await db.collection('users').doc(uid).update({
-          ...dto,
-          updatedAt: admin.firestore.FieldValue.serverTimestamp()
-        });
-      }
 
       return {
         success: true,
         message: 'Usuario actualizado correctamente',
-        updatedFields: Object.keys(dto)
+        updatedFields: Object.keys(updateData)
       };
 
     } catch (error) {
-      if (error instanceof BadRequestException) {
-        throw error;
-      }
       throw new BadRequestException(`Error al actualizar usuario: ${error.message}`);
     }
   }
@@ -113,23 +97,6 @@ export class UsersService {
     } catch (error) {
       throw new BadRequestException(`Error al eliminar usuario: ${error.message}`);
     }
-  }
-
-  async disableUser(uid: string) {
-    await this.firebaseService.getAuth().updateUser(uid, { disabled: true });
-    return { message: 'Usuario deshabilitado' };
-  }
-
-  async enableUser(uid: string) {
-    await this.firebaseService.getAuth().updateUser(uid, { disabled: false });
-    return { message: 'Usuario habilitado' };
-  }
-
-  async updatePassword(uid: string, newPassword: string) {
-    await this.firebaseService.getAuth().updateUser(uid, {
-      password: newPassword,
-    });
-    return { message: 'Contraseña actualizada', uid };
   }
 
   // --- Métodos auxiliares ---
@@ -160,14 +127,34 @@ export class UsersService {
     const matches = url.match(/storage\.googleapis\.com\/[^\/]+\/(.+)/);
     return matches ? matches[1] : null;
   }
+
   private defaultAvatarUrl: string | null = null;
 
   private async getCachedDefaultAvatarUrl(): Promise<string> {
     if (!this.defaultAvatarUrl) {
-      const bucket = this.firebaseService.getBucket();
-      const file = bucket.file('default-avatars/default-avatar.png');
-      const [url] = await file.getSignedUrl({ action: 'read', expires: '03-09-2030' });
-      this.defaultAvatarUrl = url;
+      try {
+        const bucket = this.firebaseService.getBucket();
+        const file = bucket.file('default-avatars/default-avatar.png');
+
+        //Verificar que el archivo existe
+        const [exists] = await file.exists();
+
+        if (exists) {
+          const [url] = await file.getSignedUrl({
+            action: 'read',
+            expires: '01-01-2030'
+          });
+
+          this.defaultAvatarUrl = url;
+        } else {
+          //Fallback si no existe la imagen
+          this.defaultAvatarUrl = 'https://via.placeholder.com/150';
+        }
+
+      } catch (error) {
+        console.error('Error obteniendo avatar predeterminado:', error);
+        this.defaultAvatarUrl = 'https://via.placeholder.com/150';
+      }
     }
     return this.defaultAvatarUrl;
   }

@@ -41,35 +41,15 @@ export class CreateApplicationDto {
   @IsUrl({}, { message: "Debe ser una URL válida" })
   cvUrl: string;
 
-  @Transform(({ value }) => {
-    if (typeof value === 'string') {
-      try {
-        return JSON.parse(value);
-      } catch {
-        return [value]; 
-      }
-    }
-    return Array.isArray(value) ? value : [];
-  })
-  @IsArray()
-  @IsOptional()
-  @IsString({ each: true })
-  @ApiProperty({
-    type: 'string',
-    description: 'Habilidades. Enviar como string JSON en Swagger o múltiples campos en frontend.',
-    example: '"NestJS", "TypeScript"',
-  })
-  skills: string[];
-
   @ApiProperty({
     enum: Object.values(ApplicationStatus),
-    default: ApplicationStatus.OPEN,
+    default: ApplicationStatus.RECEIVED,
   })
   @IsOptional()
   @IsEnum(ApplicationStatus, {
     message: `Status no válido. Opciones válidas: ${Object.values(ApplicationStatus).join(', ')}`
   })
-  status: ApplicationStatus = ApplicationStatus.OPEN;
+  status: ApplicationStatus = ApplicationStatus.RECEIVED;
 
   @ApiProperty({ required: false, description: 'Date when the application was submitted' })
   @IsOptional()

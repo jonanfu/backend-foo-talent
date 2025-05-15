@@ -17,11 +17,18 @@ export class NotificationController {
     return { message: 'Correo enviado con éxito' };
   }
 
+
+
   @Post('push')
   @ApiOperation({ summary: 'Enviar una notificación push' })
   @ApiResponse({ status: 201, description: 'Notificación push enviada' })
   async sendPush(@Body() pushDto: PushDto) {
     await this.notificationService.sendPushNotification(pushDto);
     return { message: 'Notificación push enviada' };
+  }
+
+  @Post("prueba-email")
+  async sendPrueba() {
+    return this.notificationService.sendRejectionEmail("jonanfu@gmail.com", "Programacion");
   }
 }

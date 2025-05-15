@@ -5,6 +5,7 @@ import { FirebaseModule } from 'src/firebase/firebase.module';
 
 @Module({
   imports: [FirebaseModule],
+  exports: [VacanciesService],
   controllers: [VacanciesController],
   providers: [VacanciesService]
 })

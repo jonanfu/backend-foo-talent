@@ -1,5 +1,7 @@
 export enum ApplicationStatus {
-  OPEN  = 'Abierta',
-  PAUSE    = 'Pausa',
-  CLOSE  = 'Cerrada',
+  RECEIVED = "Recibido",
+  IN_REVIEW = "En revisión",
+  INTERVIEW = "Entrevista",
+  FINALIST = "Finalista",
+  DISCARDED = "Descartado",
 }

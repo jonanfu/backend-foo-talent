@@ -3,7 +3,7 @@ import {
   UploadedFile, Query, Req, UseGuards
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiConsumes, ApiBearerAuth, ApiTags, ApiBody, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
+import { ApiConsumes, ApiBearerAuth, ApiTags, ApiBody, ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -11,6 +11,8 @@ import { ApplicationService } from './application.service';
 import { CreateApplicationDto } from './dto/create-application.dto';
 import { UpdateStatusDto } from './dto/update-status.dto';
 import { FindAllApplicationsDto } from './dto/find-all-applications.dto';
+import { FindAllApplicationsGlobalDto } from './dto/find-all-applications-global.dto';
+import { ApplicationStatus } from './enums/application-status.enum';
 
 @ApiTags('Applications')
 @ApiBearerAuth('access-token')
@@ -34,7 +36,6 @@ export class ApplicationController {
           email: "maria@example.com",
           phone: "+51987654321",
           cvUrl: "https://bucket.example.com/cv_maria.pdf",
-          skills: ["JavaScript", "TypeScript", "NestJS"],
           status: "Recibido"
         }
       }
@@ -47,15 +48,39 @@ export class ApplicationController {
     return this.applicationService.create(dto);
   }
 
+  @Get('all')
+  @ApiOperation({ summary: 'Retorna todas las aplicaciones (solo admin)' })
+  @ApiQuery({ name: 'status', required: false, enum: ApplicationStatus, description: 'Filtrar por estado' })
+  @ApiQuery({ name: 'page', required: false, type: Number, description: 'Número de página (mínimo 1)', example: 1 })
+  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Tamaño de página (mínimo 1)', example: 10 })
+  @ApiResponse({ status: 200, description: 'Aplicaciones listadas' })
+  @ApiResponse({ status: 401, description: 'No autorizado' })
+  @ApiResponse({ status: 403, description: 'Prohibido (solo admins)' })
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  findAllApplications(@Query() query: FindAllApplicationsGlobalDto) {
+    const { status, page = '1', limit = '10' } = query;
+    return this.applicationService.findAllApplications(status, Number(page), Number(limit));
+  }
+
   @Get()
   @ApiOperation({ summary: "Retorna las aplicaciones de una vacante" })
   @ApiResponse({ status: 200, description: 'Postulaciones listadas' })
   @ApiResponse({ status: 401, description: 'No autorizado' })
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('admin')
+  @Roles('admin', 'user')
   findAll(@Query() query: FindAllApplicationsDto) {
-    const { vacancyId, status, page = '1', limit = '10' } = query;
+    const { vacancyId, status , page = '1', limit = '10' } = query;
     return this.applicationService.findAll(vacancyId, status, Number(page), Number(limit));
+  }
+
+  @Get(':userId')
+  @ApiOperation({ summary: 'Retorna todas las aplicaciones por usuario' })
+  @ApiParam({ name: 'userId', description: 'Id del usuario' })
+  @ApiResponse({ status: 200, description: "Postulaciones encontradas" })
+  @ApiResponse({ status: 404, description: 'Postulaciones no encontradas' })
+  async applicationsByRecruiter(@Param('userId') userId: string) {
+    return await this.applicationService.findAllApplicationsByRecruiter(userId);
   }
 
   @Get(':id')
@@ -64,7 +89,7 @@ export class ApplicationController {
   @ApiResponse({ status: 200, description: 'Aplicación encontrada' })
   @ApiResponse({ status: 404, description: 'Aplicación no encontrada' })
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('admin')
+  @Roles('admin', 'user')
   findOne(@Param('id') id: string) {
     return this.applicationService.findOne(id);
   }
@@ -73,9 +98,8 @@ export class ApplicationController {
   @ApiOperation({ summary: 'Actualizar estado de una postulación' })
   @ApiParam({ name: 'id', description: 'ID de la postulación' })
   @ApiResponse({ status: 200, description: 'Estado actualizado' })
-
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('admin')
+  @Roles('admin', 'user')
   updateStatus(
     @Param('id') id: string,
     @Body() dto: UpdateStatusDto,

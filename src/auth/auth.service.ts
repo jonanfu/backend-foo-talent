@@ -1,12 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { FirebaseService } from '../firebase/firebase.service'; // Ajusta la ruta según tu estructura
 import { AvatarService } from './services/avatar.service';
-import { FieldValue } from 'firebase-admin/firestore';
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly firebaseService: FirebaseService, private readonly avatarService: AvatarService)
-   { }
+  constructor(private readonly firebaseService: FirebaseService, private readonly avatarService: AvatarService) { }
 
   async createUser(
     email: string,
@@ -33,16 +31,6 @@ export class AuthService {
     });
 
     await auth.setCustomUserClaims(userRecord.uid, { role });
-
-    const db = this.firebaseService.getFirestore();
-    await db.collection('users').doc(userRecord.uid).set({
-      email,
-      displayName,
-      phoneNumber,
-      role,
-      photoUrl: finalPhotoUrl,
-      createdAt: FieldValue.serverTimestamp(),
-    });
 
     return {
       uid: userRecord.uid,
@@ -82,6 +70,17 @@ export class AuthService {
       return link;
     } catch (error) {
       throw new Error(`No se pudo generar el enlace: ${error.message}`);
+    }
+  }
+
+  async updatePassword(uid: string, newPassword: string) {
+    try {
+      await this.firebaseService.getAuth().updateUser(uid, {
+        password: newPassword,
+      });
+      return { message: 'Contraseña actualizada', uid };
+    } catch (error) {
+      throw new Error(`Error al actualizar contraseña: ${error.message}`);
     }
   }
 } 
