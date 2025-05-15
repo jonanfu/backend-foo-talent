@@ -110,7 +110,7 @@ export class RecluitmentService {
             const vacancyDescription = `${vacancyData.descripcion || ''}\n\nResponsabilidades:\n${vacancyData.responsabilidades || ''}`;
 
             // 3. Obtener el total de aplicaciones
-            const query = this.collectionProgramdores
+            const query = this.collectionApplications
                 .where("vacancyId", '==', vacancyId)
                 .where("status", "==", ApplicationStatus.RECEIVED)
                 .limit(options.maxApplications);
