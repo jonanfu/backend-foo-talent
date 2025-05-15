@@ -137,4 +137,6 @@ export class VacanciesService {
         await docRef.delete();
         return { id, message: 'Vacante eliminada correctamente' };
     }
+
+    
 }

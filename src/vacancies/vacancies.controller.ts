@@ -126,4 +126,18 @@ export class VacanciesController {
         const isAdmin = req.user.role === 'admin';
         return this.vacanciesService.delete(id, userId, isAdmin);
     }
+
+    //Obtener vacantes del reclutador (pasando el id del reclutador)
+@Get('/reclutador/:userId')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('admin', 'user')
+@ApiOperation({ summary: 'Obtener todas las vacantes de un reclutador por UID' })
+@ApiParam({ name: 'userId', description: 'UID del reclutador' })
+@ApiResponse({ status: 200, description: 'Vacantes del reclutador listadas' })
+@ApiResponse({ status: 404, description: 'No se encontraron vacantes para el reclutador' })
+async findAllByRecruiter(@Param('userId') userId: string): Promise<any> {
+    return await this.vacanciesService.findAllVacanciesByRecruiter(userId);
 }
+
+}
+
