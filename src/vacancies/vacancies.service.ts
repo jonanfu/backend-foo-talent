@@ -85,9 +85,6 @@ export class VacanciesService {
             .where('userId', '==', userId)
             .get();
 
-        if (vacanciesSnapshot.empty) {
-            throw new NotFoundException('Vacantes no encontradas');
-        }
 
         const vacancies = vacanciesSnapshot.docs.map(doc => ({
             id: doc.id,
