@@ -41,7 +41,7 @@ export class UsersController {
 
   @Get(':uid')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('admin')
+  @Roles('admin', 'user')
   @ApiOperation({ summary: 'Obtener un usuario por UID (solo admin)' })
   @ApiResponse({ status: 200, description: 'Datos del usuario' })
   @ApiResponse({ status: 403, description: 'No tienes permiso' })
