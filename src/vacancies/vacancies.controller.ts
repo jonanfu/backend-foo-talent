@@ -20,7 +20,7 @@ export class VacanciesController {
 
     @Post()
     @UseGuards(JwtAuthGuard, RolesGuard)
-    @Roles('admin', 'user')
+    @Roles('user')
     @ApiConsumes('application/json')
     @ApiBody({
         description: 'Crear una nueva vacante',

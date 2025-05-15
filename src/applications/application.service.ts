@@ -1,19 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { FirebaseService } from '../firebase/firebase.service';
-import { v4 as uuid } from 'uuid';
 import { CreateApplicationDto } from './dto/create-application.dto';
 import { ApplicationStatus } from './enums/application-status.enum';
 import { FieldValue } from 'firebase-admin/firestore';
 import { VacanciesService } from 'src/vacancies/vacancies.service';
+import { NotificationService } from 'src/notifications/notification.service';
 
-interface Application {
-  id: string;
-  vacancyId: string;
-  status: ApplicationStatus;
-  cvPath: string;
-  createdAt: any;
-  [key: string]: any;
-}
 
 @Injectable()
 export class ApplicationService {
@@ -21,7 +13,8 @@ export class ApplicationService {
 
   constructor(
     private firebaseService: FirebaseService,
-    private vacancyService: VacanciesService
+    private vacancyService: VacanciesService,
+    private notificationService: NotificationService
 
   ) {
     this.collection = this.firebaseService.getFirestore().collection('applications');
@@ -33,7 +26,11 @@ export class ApplicationService {
       status: dto.status ?? ApplicationStatus.RECEIVED,
       cvUrl: dto.cvUrl,
       createdAt: FieldValue.serverTimestamp(),
-    });
+    }); 
+
+    const vacancyData = await this.vacancyService.findOne(dto.vacancyId)
+
+    this.notificationService.sendPostulationEmail(dto.email, vacancyData.puesto)
 
     return {
       id: doc.id

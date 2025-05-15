@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Query } from "@nestjs/common";
+import { Body, Controller, Param, Post, Query } from "@nestjs/common";
 import { RecluitmentService, PreselectionResult } from "./recruitment.service";
 
 @Controller("recruitment")
@@ -23,8 +23,11 @@ export class RecluitmentController {
 
     
     @Post("result_vacancies")
-    async preselection(): Promise<PreselectionResult> {
-        return await this.recruitmentService.preselection("OOCRYQhUpOC9wxBMyDM3", 10);
+    async preselection(
+        @Param('vacancyId') vacancyId: string,
+        @Param('amount') amount: number,
+    ): Promise<PreselectionResult> {
+        return await this.recruitmentService.preselection(vacancyId, amount);
     }
 
     @Post("eliminar-index")

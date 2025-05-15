@@ -55,13 +55,37 @@ export class NotificationService {
         showButton: true,
         buttonText: 'Ver otras oportunidades',
         buttonLink: 'https://tuempresa.com/carreras',
-        year: new Date().getFullYear()
       });
 
       // Enviar el correo a través del servicio
       await this.emailService.sendEmail({
         to: email,
         subject: `Actualización sobre ${vacancyTitle}`,
+        html
+      });
+    } catch (error) {
+      console.error(`Error al enviar correo de rechazo a ${email}:`, error);
+      throw error;
+    }
+  }
+
+  async sendPostulationEmail(email: string, vacancyTitle: string): Promise<void> {
+    try {
+      // Renderizar la plantilla con los datos necesarios
+      const html = await this.templateService.renderTemplate('rejection', {
+        title: `¡Información sobre postulación`,
+        header: '¡Tu postulación fue enviada!',
+        message1: `Gracias por postularte a la vacante. Hemos recibido tu información correctamente y el equipo de selección la revisará en breve. `,
+        message2: 'Si tu perfil coincide con los requerimientos, nos pondremos en contacto contigo.',
+        showButton: true,
+        buttonText: 'Ver otras oportunidades',
+        buttonLink: 'https://tuempresa.com/carreras',
+      });
+
+      // Enviar el correo a través del servicio
+      await this.emailService.sendEmail({
+        to: email,
+        subject: `Actualización sobre la postulación para  ${vacancyTitle}`,
         html
       });
     } catch (error) {

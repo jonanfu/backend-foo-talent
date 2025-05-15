@@ -73,51 +73,51 @@ export class RecluitmentService {
 
     async getAllProgramadores() {
         const snapshot = await this.collectionProgramdores.get(); // Obtiene todos los documentos
-    
+
         if (snapshot.empty) {
-          return []; // Si no hay documentos, retorna un arreglo vacío
+            return []; // Si no hay documentos, retorna un arreglo vacío
         }
-    
+
         // Mapea los documentos a un array de objetos con sus datos e ID
         const programadores = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
+            id: doc.id,
+            ...doc.data(),
         }));
-    
+
         return programadores;
     }
 
-    async preselection(vacancyId: string, limit: number, options: { 
-        batchSize?: number, 
+    async preselection(vacancyId: string, limit: number, options: {
+        batchSize?: number,
         delayBetweenBatches?: number,
-        maxApplications?: number 
+        maxApplications?: number
     } = {
-        batchSize: 10,
-        delayBetweenBatches: 1000,
-        maxApplications: 200
-    }): Promise<PreselectionResult> {
+            batchSize: 10,
+            delayBetweenBatches: 1000,
+            maxApplications: 200
+        }): Promise<PreselectionResult> {
         try {
             // 1. Configuración inicial
             const vectorStore = await this.pineconeService.getVectorStore("cv-index");
-            
+
             // 2. Obtener información de la vacante
             const vacancyDoc = await this.collectionVacancies.doc(vacancyId).get();
             if (!vacancyDoc.exists) {
                 throw new Error(`No se encontró la vacante con ID: ${vacancyId}`);
             }
-            
+
             const vacancyData = vacancyDoc.data();
             const vacancyDescription = `${vacancyData.descripcion || ''}\n\nResponsabilidades:\n${vacancyData.responsabilidades || ''}`;
-    
+
             // 3. Obtener el total de aplicaciones
             const query = this.collectionProgramdores
                 .where("vacancyId", '==', vacancyId)
                 .where("status", "==", ApplicationStatus.RECEIVED)
                 .limit(options.maxApplications);
-            
+
             const snapshot = await query.get();
             const totalApplications = snapshot.size;
-            
+
             if (totalApplications === 0) {
                 return {
                     success: true,
@@ -129,63 +129,70 @@ export class RecluitmentService {
                     batches: []
                 };
             }
-    
+
             // 4. Procesar todos los CVs sin cambiar el estado
             const allCandidates = snapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data(),
                 docRef: doc.ref
             }));
-    
+
             // Procesar en lotes para evitar sobrecarga
             const batchSize = options.batchSize || 10;
             const batches: BatchResult[] = [];
-            
+
             for (let i = 0; i < allCandidates.length; i += batchSize) {
                 const batch = allCandidates.slice(i, i + batchSize);
                 const batchResults = await this.processBatch(batch, vacancyId, vectorStore, false);
                 batches.push(...batchResults);
-                
+
                 if (i + batchSize < allCandidates.length) {
                     await new Promise(resolve => setTimeout(resolve, options.delayBetweenBatches || 1000));
                 }
             }
-    
-            // 5. Buscar los mejores candidatos
-            const results = await vectorStore.similaritySearchWithScore(
-                vacancyDescription,
-                limit,
-                { filter: { vacancyId: vacancyId }}
-                );
-            const selectedIds = results.map(([doc]) => doc.metadata.candidateId);
-    
-            // 6. Actualizar estados y enviar correos
-            const updatePromises = allCandidates.map(async candidate => {
-                if (selectedIds.includes(candidate.id)) {
-                    // Candidato seleccionado
-                    await candidate.docRef.update({
-                        status: ApplicationStatus.IN_REVIEW,
-                        lastProcessedAt: new Date().toISOString()
-                    });
-                } else {
-                    // Candidato descartado
-                    await candidate.docRef.update({
-                        status: ApplicationStatus.DISCARDED,
-                        lastProcessedAt: new Date().toISOString()
-                    });
-                   this.notificationService.sendRejectionEmail(candidate.email, vacancyData.puesto)
 
+            const filter = {
+                vacancyId: { $eq: vacancyId }     
+            };
+              
+
+            const results = await vectorStore.similaritySearchWithScore(vacancyDescription, limit, filter);
+            const selectedIds = results.map(([doc]) => doc.metadata.candidateId);
+            const selectedIdSet = new Set(selectedIds);
+            const now = new Date().toISOString();
+
+            const updatePromises = allCandidates.map(async candidate => {
+                try {
+                    const isSelected = selectedIdSet.has(candidate.id);
+                    const newStatus = isSelected ? ApplicationStatus.IN_REVIEW : ApplicationStatus.DISCARDED;
+
+                    await candidate.docRef.update({
+                        status: newStatus,
+                        lastProcessedAt: now
+                    });
+
+                    if (!isSelected) {
+                        try {
+                            await this.notificationService.sendRejectionEmail(candidate.email, vacancyData.puesto);
+                        } catch (emailError) {
+                            console.error(`Failed to send rejection email to ${candidate.email}:`, emailError);
+                        }
+                    }
+
+                    console.log(`Candidate ${candidate.id} moved to ${newStatus}`);
+                } catch (err) {
+                    console.error(`Error processing candidate ${candidate.id}:`, err);
                 }
             });
-    
-            await Promise.all(updatePromises); 
-    
+
+            await Promise.all(updatePromises);
+
             // 7. Generar reporte final
             const successfulCount = batches.filter(r => r.success).length;
             const failureCount = batches.filter(r => !r.success).length;
 
 
-            this.vacancyService.update(vacancyId, {estado: VacancyStatus.CLOSED}, vacancyData.userId, true);
+            this.vacancyService.update(vacancyId, { estado: VacancyStatus.CLOSED }, vacancyData.userId, true);
             return {
                 success: true,
                 vacancyId,
@@ -195,7 +202,7 @@ export class RecluitmentService {
                 failureCount,
                 batches,
             };
-    
+
         } catch (error) {
             console.error('Error en preselection masiva:', error);
             return {
@@ -209,8 +216,8 @@ export class RecluitmentService {
             };
         }
     }
-    
-    
+
+
     private async processBatch(applications: any[], vacancyId: string, vectorStore: any, updateStatus = false) {
         return Promise.all(
             applications.map(async (app) => {
@@ -218,17 +225,16 @@ export class RecluitmentService {
                     if (!app.cvPath) {
                         if (updateStatus) {
                             await app.docRef.update({
-                                status: ApplicationStatus.DISCARDED,
                                 lastProcessedAt: new Date().toISOString(),
                                 rejectionReason: "No tiene CV"
                             });
                         }
                         return { id: app.id, success: false, error: "No tiene CV" };
                     }
-    
+
                     // Extraer texto con timeout
                     const text = await this.extractTextWithTimeout(app.cvPath, 30000);
-                    
+
                     // Almacenar en Pinecone
                     await vectorStore.addDocuments(
                         [{
@@ -241,16 +247,16 @@ export class RecluitmentService {
                         }],
                         [app.id]
                     );
-    
+
                     if (updateStatus) {
                         await app.docRef.update({
                             cvProcessed: true,
                             lastProcessedAt: new Date().toISOString()
                         });
                     }
-    
+
                     return { id: app.id, success: true };
-    
+
                 } catch (error) {
                     if (updateStatus) {
                         await app.docRef.update({
@@ -258,27 +264,27 @@ export class RecluitmentService {
                             error: error.message.substring(0, 500)
                         });
                     }
-                    
-                    return { 
-                        id: app.id, 
-                        success: false, 
-                        error: error.message 
+
+                    return {
+                        id: app.id,
+                        success: false,
+                        error: error.message
                     };
                 }
             })
         );
     }
-    
+
     private async extractTextWithTimeout(pdfUrl: string, timeoutMs: number) {
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), timeoutMs);
-    
+
         try {
-            const response = await axios.get(pdfUrl, { 
+            const response = await axios.get(pdfUrl, {
                 responseType: 'arraybuffer',
-                signal: controller.signal 
+                signal: controller.signal
             });
-            
+
             const data = await PdfParse(response.data);
             return data.text;
         } finally {
@@ -286,7 +292,7 @@ export class RecluitmentService {
         }
     }
 
-    async deleteIndex(){
+    async deleteIndex() {
         await this.pineconeService.deleteIndex("cv-index");
         return "eliminado información del index";
     }
