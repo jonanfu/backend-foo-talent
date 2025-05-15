@@ -222,7 +222,7 @@ export class RecluitmentService {
         return Promise.all(
             applications.map(async (app) => {
                 try {
-                    if (!app.cvPath) {
+                    if (!app.cvUrl) {
                         if (updateStatus) {
                             await app.docRef.update({
                                 lastProcessedAt: new Date().toISOString(),
@@ -233,7 +233,7 @@ export class RecluitmentService {
                     }
 
                     // Extraer texto con timeout
-                    const text = await this.extractTextWithTimeout(app.cvPath, 30000);
+                    const text = await this.extractTextWithTimeout(app.cvUrl, 30000);
 
                     // Almacenar en Pinecone
                     await vectorStore.addDocuments(
