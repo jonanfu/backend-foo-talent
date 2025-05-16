@@ -94,6 +94,31 @@ export class NotificationService {
     }
   }
 
+  async sendCredentialEmail(email: string, displayName: string, credential: string): Promise<void> {
+    try {
+      // Renderizar la plantilla con los datos necesarios
+      const html = await this.templateService.renderTemplate('rejection', {
+        title: `¡Información de Registro`,
+        header: '¡Has sido Registrado exitosamente!',
+        message1: `Bienvenid@ ${displayName}`,
+        message2: `Sus credenciales son las siguientes: ${credential}.`,
+        showButton: true,
+        buttonText: 'Ir a la página de login',
+        buttonLink: 'https://tuempresa.com/carreras',
+      });
+
+      // Enviar el correo a través del servicio
+      await this.emailService.sendEmail({
+        to: email,
+        subject: `Credenciales de la cuenta de Talent Match`,
+        html
+      });
+    } catch (error) {
+      console.error(`Error al enviar correo de rechazo a ${email}:`, error);
+      throw error;
+    }
+  }
+
   async sendPushNotification(pushDto: PushDto) {
     const { token, title, body, data } = pushDto;
     try {

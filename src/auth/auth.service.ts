@@ -1,10 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { FirebaseService } from '../firebase/firebase.service'; // Ajusta la ruta según tu estructura
 import { AvatarService } from './services/avatar.service';
+import { NotificationService } from 'src/notifications/notification.service';
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly firebaseService: FirebaseService, private readonly avatarService: AvatarService) { }
+  constructor(
+    private readonly firebaseService: FirebaseService, 
+    private readonly avatarService: AvatarService,
+    private readonly notificationService: NotificationService
+  ) { }
 
   async createUser(
     email: string,
@@ -31,6 +36,8 @@ export class AuthService {
     });
 
     await auth.setCustomUserClaims(userRecord.uid, { role });
+
+    await this.notificationService.sendCredentialEmail(email, displayName, password)
 
     return {
       uid: userRecord.uid,
