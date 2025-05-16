@@ -71,7 +71,9 @@ constructor(private firebaseService: FirebaseService) {
         query = query.orderBy('createdAt', 'desc');
 
         const snapshot = await query.offset((page - 1) * limit).limit(limit).get();
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const vacancyData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        return vacancyData;
     }
 
     async findOne(id: string) {

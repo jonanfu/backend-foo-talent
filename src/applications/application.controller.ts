@@ -85,6 +85,16 @@ export class ApplicationController {
     return await this.applicationService.findAllApplicationsByRecruiter(userId);
   }
 
+  @Get()
+  @ApiOperation({ summary: 'Retorna todas las aplicaciones para admin' })
+  @ApiResponse({ status: 200, description: "Postulaciones encontradas" })
+  @ApiResponse({ status: 404, description: 'Postulaciones no encontradas' })
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  async applicationsByadmin() {
+    return await this.applicationService.findAllApplicationsByAdmin();
+  }
+
   @Get(':id')
   @ApiOperation({ summary: "Retorna el detalle de una aplicación" })
   @ApiParam({ name: 'id', description: 'ID de la postulación' })

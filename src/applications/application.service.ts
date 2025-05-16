@@ -90,7 +90,47 @@ export class ApplicationService {
         
           return {
             id: doc.id,
+            vacancyId: vacancy.id,
             job_posicion: vacancy.puesto,
+            fullName: data.fullName,
+            date: formattedDate,
+            status: data.status,
+            phone: data.phone,
+            cvUrl: data.cvUrl,
+          };
+        });
+
+        allApplications.push(...applications);
+      }
+    }
+
+    return allApplications;
+  }
+
+
+  async findAllApplicationsByAdmin() {
+    const vacancies = await this.vacancyService.findAll();
+
+    const allApplications: any = [];
+
+    for (const vacancy of vacancies) {
+      const vacancyData = await this.vacancyService.findOne(vacancy.id)
+      const applicationsSnapshot = await this.collection
+        .where('vacancyId', '==', vacancy.id)
+        .get();
+
+      if (!applicationsSnapshot.empty) {
+        const applications = applicationsSnapshot.docs.map(doc => {
+          const data = doc.data();
+          const createdAt = data.createdAt?.toDate?.(); // Convertir Timestamp a Date
+          const formattedDate = createdAt
+            ? format(createdAt, 'dd/MM/yyyy')
+            : null;
+        
+          return {
+            id: doc.id,
+            vacancyId: vacancy.id,
+            job_posicion: vacancyData.puesto,
             fullName: data.fullName,
             date: formattedDate,
             status: data.status,

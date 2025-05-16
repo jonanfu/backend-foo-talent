@@ -128,15 +128,15 @@ export class VacanciesController {
     }
 
     //Obtener vacantes del reclutador (pasando el id del reclutador)
-@Get('/reclutador/:userId')
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('admin', 'user')
-@ApiOperation({ summary: 'Obtener todas las vacantes de un reclutador por UID' })
-@ApiParam({ name: 'userId', description: 'UID del reclutador' })
-@ApiResponse({ status: 200, description: 'Vacantes del reclutador listadas' })
+    @Get('/reclutador/:userId')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('admin', 'user')
+    @ApiOperation({ summary: 'Obtener todas las vacantes de un reclutador por UID' })
+    @ApiParam({ name: 'userId', description: 'UID del reclutador' })
+    @ApiResponse({ status: 200, description: 'Vacantes del reclutador listadas' })
 
-async findAllByRecruiter(@Param('userId') userId: string): Promise<any> {
-    return await this.vacanciesService.findAllVacanciesByRecruiter(userId);
-}
+    async findAllByRecruiter(@Param('userId') userId: string): Promise<any> {
+        return await this.vacanciesService.findAllVacanciesByRecruiter(userId);
+    }
 }
 
