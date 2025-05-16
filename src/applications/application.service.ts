@@ -5,6 +5,7 @@ import { ApplicationStatus } from './enums/application-status.enum';
 import { FieldValue } from 'firebase-admin/firestore';
 import { VacanciesService } from 'src/vacancies/vacancies.service';
 import { NotificationService } from 'src/notifications/notification.service';
+import { format } from 'date-fns';
 
 
 @Injectable()
@@ -52,7 +53,7 @@ export class ApplicationService {
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   }
 
-  async findAll(vacancyId: string, status?: ApplicationStatus, page = 1, limit = 1000) {
+  async findAll(vacancyId: string, status?: ApplicationStatus, page = 1, limit = 100) {
     let query = this.collection
       .where('vacancyId', '==', vacancyId)
       .orderBy('createdAt', 'desc');
@@ -80,15 +81,22 @@ export class ApplicationService {
         .get();
 
       if (!applicationsSnapshot.empty) {
-        const applications = applicationsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          job_posicion: vacancy.puesto,
-          date: doc.createdAt,
-          status: doc.status,
-          phone: doc.phone,
-          cvUrl: doc.cvUrl
-          
-        }));
+        const applications = applicationsSnapshot.docs.map(doc => {
+          const data = doc.data();
+          const createdAt = data.createdAt?.toDate?.(); // Convertir Timestamp a Date
+          const formattedDate = createdAt
+            ? format(createdAt, 'dd/MM/yyyy')
+            : null;
+        
+          return {
+            id: doc.id,
+            job_posicion: vacancy.puesto,
+            date: formattedDate,
+            status: data.status,
+            phone: data.phone,
+            cvUrl: data.cvUrl,
+          };
+        });
 
         allApplications.push(...applications);
       }

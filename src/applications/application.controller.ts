@@ -79,6 +79,8 @@ export class ApplicationController {
   @ApiParam({ name: 'userId', description: 'Id del usuario' })
   @ApiResponse({ status: 200, description: "Postulaciones encontradas" })
   @ApiResponse({ status: 404, description: 'Postulaciones no encontradas' })
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin', 'user')
   async applicationsByRecruiter(@Param('userId') userId: string) {
     return await this.applicationService.findAllApplicationsByRecruiter(userId);
   }
