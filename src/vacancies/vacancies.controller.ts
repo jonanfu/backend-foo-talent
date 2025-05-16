@@ -134,9 +134,9 @@ export class VacanciesController {
 @ApiOperation({ summary: 'Obtener todas las vacantes de un reclutador por UID' })
 @ApiParam({ name: 'userId', description: 'UID del reclutador' })
 @ApiResponse({ status: 200, description: 'Vacantes del reclutador listadas' })
+
 async findAllByRecruiter(@Param('userId') userId: string): Promise<any> {
     return await this.vacanciesService.findAllVacanciesByRecruiter(userId);
 }
-
 }
 
