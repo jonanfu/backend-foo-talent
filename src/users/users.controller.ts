@@ -46,7 +46,7 @@ export class UsersController {
   @ApiResponse({ status: 200, description: 'Datos del usuario' })
   @ApiResponse({ status: 403, description: 'No tienes permiso' })
   async findOne(@Param('uid') uid: string) {
-    return this.usersService.getUserById(uid);
+    return await this.usersService.getUserById(uid);
   }
 
   @Patch(':uid/role')

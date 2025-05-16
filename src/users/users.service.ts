@@ -37,7 +37,6 @@ export class UsersService {
         photoURL: user.photoURL || defaultAvatar,
         role: user.customClaims?.role || 'user',
         createdAt: user.metadata.creationTime,
-        disabled: user.disabled || false,
       };
     } catch (error) {
       throw new NotFoundException('Usuario no encontrado');
@@ -84,14 +83,12 @@ export class UsersService {
 
   async deleteUser(uid: string) {
     try {
-      // Opcional: Eliminar la foto de Storage si es una URL personalizada
-      // await this.deleteUserPhotoIfCustom(uid);
+
 
       await this.firebaseService.getAuth().deleteUser(uid);
 
-      // Opcional: Eliminar datos de Firestore
-      const db = this.firebaseService.getFirestore();
-      await db.collection('users').doc(uid).delete();
+      
+
 
       return { message: 'Usuario eliminado correctamente' };
     } catch (error) {

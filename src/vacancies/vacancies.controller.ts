@@ -139,12 +139,12 @@ export class VacanciesController {
     }
 
 
-    @Get('/admin')
-    //@UseGuards(JwtAuthGuard, RolesGuard)
-    //@Roles('admin', 'user')
+    @Get()
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('admin')
     @ApiOperation({ summary: 'Obtener todas las vacantes con nombre de recrutador' })
     @ApiResponse({ status: 200, description: 'Vacantes listadas (admin)' })
-    async findAllByAdmin(): Promise<any> {
+    async findAllAdmin(): Promise<any> {
         return await this.vacanciesService.findAllVacanciesByAdmin();
     }
 }

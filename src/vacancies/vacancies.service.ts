@@ -10,14 +10,13 @@ export class VacanciesService {
     private collection;
     private applicationsCollection;
 
-constructor(
-    private firebaseService: FirebaseService,
-    private usersService: UsersService
-    
-) {
-    this.collection = this.firebaseService.getFirestore().collection('vacancies');
-    this.applicationsCollection = this.firebaseService.getFirestore().collection('applications');
-}
+    constructor(
+        private firebaseService: FirebaseService,
+        private usersService: UsersService
+
+    ) {
+        this.collection = this.firebaseService.getFirestore().collection('vacancies');
+    }
 
     async create(dto: CreateVacancyDto, userId: string) {
         // La fecha se asigna solo si no está definida en el DTO
@@ -106,11 +105,11 @@ constructor(
     async findAllVacanciesByAdmin() {
         const vacanciesSnapshot = await this.collection.get();
     
+        // Usamos Promise.all para esperar todas las promesas
         const vacancies = await Promise.all(
             vacanciesSnapshot.docs.map(async (doc) => {
                 const data = doc.data();
-                const dataUser = await this.usersService.getUserById(doc.userId);
-    
+                const dataUser = await this.usersService.getUserById(data.userId);
                 return {
                     id: doc.id,
                     recruter_name: dataUser.displayName,
@@ -149,41 +148,39 @@ constructor(
         return { id, message: 'Vacante actualizada correctamente' };
     }
 
-async delete(id: string, userId: string, isAdmin: boolean) {
-    const docRef = this.collection.doc(id);
-    const doc = await docRef.get();
+    async delete(id: string, userId: string, isAdmin: boolean) {
+        const docRef = this.collection.doc(id);
+        const doc = await docRef.get();
 
-    if (!doc.exists) {
-        throw new NotFoundException(`Vacante con ID ${id} no encontrada`);
+        if (!doc.exists) {
+            throw new NotFoundException(`Vacante con ID ${id} no encontrada`);
+        }
+
+        const vacancy = doc.data();
+
+        if (vacancy.userId !== userId && !isAdmin) {
+            throw new ForbiddenException('No tienes permiso para eliminar esta vacante');
+        }
+
+        // 🔥 1️⃣ Buscar todas las aplicaciones relacionadas con esta vacante
+        const applicationsSnapshot = await this.applicationsCollection
+            .where('vacancyId', '==', id)
+            .get();
+
+        // 🔥 2️⃣ Eliminar cada una de las aplicaciones encontradas
+        const batch = this.firebaseService.getFirestore().batch();
+        applicationsSnapshot.forEach((app) => {
+            batch.delete(app.ref);
+        });
+
+        await batch.commit();
+        console.log(`🔥 Aplicaciones relacionadas con la vacante ${id} eliminadas correctamente.`);
+
+        // 🔥 3️⃣ Eliminar la vacante
+        await docRef.delete();
+        console.log(`🔥 Vacante ${id} eliminada correctamente.`);
+
+        return { id, message: 'Vacante y aplicaciones eliminadas correctamente' };
     }
 
-    const vacancy = doc.data();
-
-    if (vacancy.userId !== userId && !isAdmin) {
-        throw new ForbiddenException('No tienes permiso para eliminar esta vacante');
-    }
-
-    // 🔥 1️⃣ Buscar todas las aplicaciones relacionadas con esta vacante
-    const applicationsSnapshot = await this.applicationsCollection
-        .where('vacancyId', '==', id)
-        .get();
-
-    // 🔥 2️⃣ Eliminar cada una de las aplicaciones encontradas
-    const batch = this.firebaseService.getFirestore().batch();
-    applicationsSnapshot.forEach((app) => {
-        batch.delete(app.ref);
-    });
-
-    await batch.commit();
-    console.log(`🔥 Aplicaciones relacionadas con la vacante ${id} eliminadas correctamente.`);
-
-    // 🔥 3️⃣ Eliminar la vacante
-    await docRef.delete();
-    console.log(`🔥 Vacante ${id} eliminada correctamente.`);
-
-    return { id, message: 'Vacante y aplicaciones eliminadas correctamente' };
-}
-
-
-    
 }
