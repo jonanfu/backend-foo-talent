@@ -27,7 +27,6 @@ export interface PreselectionResult {
 
 @Injectable()
 export class RecluitmentService {
-    private collectionProgramdores;
     private collectionApplications;
     private collectionVacancies;
 
@@ -37,54 +36,8 @@ export class RecluitmentService {
         private notificationService: NotificationService,
         private vacancyService: VacanciesService
     ) {
-        this.collectionProgramdores = this.firebaseService.getFirestore().collection('programadores');
         this.collectionApplications = this.firebaseService.getFirestore().collection('applications');
         this.collectionVacancies = this.firebaseService.getFirestore().collection('vacancies');
-    }
-
-    async saveData() {
-        try {
-            const data = JSON.parse(fs.readFileSync('src/recruitments/dto/data.json', 'utf8'));
-
-            for (const candidato of data) {
-                await this.collectionProgramdores.add(candidato);
-            }
-
-            return "Datos subidos correctamente.";
-        } catch (error) {
-            console.error("Error al subir los datos:", error);
-            throw new Error("No se pudieron subir los datos.");
-        }
-    }
-
-    async deleteAll() {
-        const snapshot = await this.collectionProgramdores.get();
-
-        const batch = this.firebaseService.getFirestore().batch();
-
-        snapshot.forEach(doc => {
-            batch.delete(doc.ref);
-        });
-
-        await batch.commit();
-
-        return "Todos los documentos han sido eliminados.";
-    }
-
-    async getAllProgramadores() {
-        const snapshot = await this.collectionProgramdores.get(); // Obtiene todos los documentos
-
-        if (snapshot.empty) {
-            return []; // Si no hay documentos, retorna un arreglo vacío
-        }
-
-        // Mapea los documentos a un array de objetos con sus datos e ID
-        const programadores = snapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-        }));
-
-        return programadores;
     }
 
     async preselection(vacancyId: string, limit: number, options: {
@@ -168,7 +121,8 @@ export class RecluitmentService {
 
                     await candidate.docRef.update({
                         status: newStatus,
-                        lastProcessedAt: now
+                        lastProcessedAt: now,
+                        cvProcessed: true
                     });
 
                     if (!isSelected) {
@@ -226,7 +180,8 @@ export class RecluitmentService {
                         if (updateStatus) {
                             await app.docRef.update({
                                 lastProcessedAt: new Date().toISOString(),
-                                rejectionReason: "No tiene CV"
+                                rejectionReason: "No tiene CV",
+                                status: ApplicationStatus.DISCARDED
                             });
                         }
                         return { id: app.id, success: false, error: "No tiene CV" };
@@ -292,11 +247,6 @@ export class RecluitmentService {
         }
     }
 
-    async deleteIndex() {
-        await this.pineconeService.deleteIndex("cv-index");
-        return "eliminado información del index";
-    }
-
     async getVectorStore(vacancyId: string, limit: number) {
         const filter = {
             vacancyId: { $eq: vacancyId }     
@@ -337,7 +287,7 @@ export class RecluitmentService {
                 await candidate.docRef.update({
                     status: newStatus,
                     lastProcessedAt: new Date().toISOString()
-            });
+                });
                 
                 console.log(`id candidato ${candidate.id} tiene el estado de ${newStatus}`);
 

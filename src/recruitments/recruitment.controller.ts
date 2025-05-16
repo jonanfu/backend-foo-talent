@@ -7,22 +7,6 @@ export class RecluitmentController {
 
     constructor(private readonly recruitmentService: RecluitmentService) { }
 
-    @Post("save_data")
-    async saveData() {
-        return this.recruitmentService.saveData();
-    }
-
-    @Post("delete")
-    async deleteData() {
-        return await this.recruitmentService.deleteAll();
-    }
-
-    @Post('obtener_data')
-    async obtenerData() {
-        return this.recruitmentService.getAllProgramadores()
-    }
-
-
     @Post('result_vacancies')
     async preselection(
       @Body() preselectionDto: PreselectionDto,
@@ -39,10 +23,4 @@ export class RecluitmentController {
       return await this.recruitmentService.getVectorStore(vacancyId, amount);
     }
 
-    
-
-    @Post("eliminar-index")
-    async eliminarIndex() {
-        return await this.recruitmentService.deleteIndex()
-    }
 }
