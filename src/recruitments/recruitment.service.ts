@@ -265,9 +265,7 @@ export class RecluitmentService {
         const results = await vectorStore.similaritySearchWithScore(vacancyDescription, limit, filter);
 
         const query = this.collectionApplications
-        .where("vacancyId", '==', vacancyId)
-        .where("status", "==", ApplicationStatus.RECEIVED)
-        ;
+        .where("vacancyId", '==', vacancyId);
 
         const snapshot = await query.get();
 

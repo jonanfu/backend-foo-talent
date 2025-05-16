@@ -95,7 +95,7 @@ export class AuthController {
 
   @Patch(':uid/password')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('admin')
+  @Roles('admin', 'user')
   @ApiOperation({ summary: 'Cambiar contraseña del usuario (Firebase)' })
   @ApiBody({ schema: { properties: { password: { type: 'string' } } } })
   async updatePassword(

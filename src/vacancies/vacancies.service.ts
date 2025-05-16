@@ -3,13 +3,18 @@ import { FirebaseService } from '../firebase/firebase.service';
 import { CreateVacancyDto, VacancyStatus, Modalidad, Prioridad, Jornada } from './dto/create-vacancy.dto';
 import { UpdateVacancyDto } from './dto/update-vacancy.dto';
 import { FieldValue } from 'firebase-admin/firestore';
+import { UsersService } from 'src/users/users.service';
 
 @Injectable()
 export class VacanciesService {
     private collection;
     private applicationsCollection;
 
-constructor(private firebaseService: FirebaseService) {
+constructor(
+    private firebaseService: FirebaseService,
+    private usersService: UsersService
+    
+) {
     this.collection = this.firebaseService.getFirestore().collection('vacancies');
     this.applicationsCollection = this.firebaseService.getFirestore().collection('applications');
 }
@@ -95,6 +100,29 @@ constructor(private firebaseService: FirebaseService) {
             ...doc.data()
         }));
 
+        return vacancies;
+    }
+
+    async findAllVacanciesByAdmin() {
+        const vacanciesSnapshot = await this.collection.get();
+    
+        const vacancies = await Promise.all(
+            vacanciesSnapshot.docs.map(async (doc) => {
+                const data = doc.data();
+                const dataUser = await this.usersService.getUserById(doc.userId);
+    
+                return {
+                    id: doc.id,
+                    recruter_name: dataUser.displayName,
+                    puesto: data.puesto,
+                    ubicacion: data.ubicacion,
+                    modalidad: data.modalidad,
+                    estado: data.estado,
+                    prioridad: data.prioridad,
+                };
+            })
+        );
+    
         return vacancies;
     }
 
