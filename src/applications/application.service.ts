@@ -82,24 +82,40 @@ export class ApplicationService {
       if (!applicationsSnapshot.empty) {
         const applications = applicationsSnapshot.docs.map(doc => ({
           id: doc.id,
-          ...doc.data()
+          job_posicion: vacancy.puesto,
+          date: doc.createdAt,
+          status: doc.status,
+          phone: doc.phone,
+          cvUrl: doc.cvUrl
+          
         }));
 
         allApplications.push(...applications);
       }
     }
 
-    if (allApplications.length === 0) {
-      throw new NotFoundException('No se encontraron aplicaciones para las vacantes de este reclutador');
-    }
-
     return allApplications;
   }
 
   async findOne(id: string) {
-    const doc = await this.collection.doc(id).get();
-    if (!doc.exists) throw new NotFoundException('Aplicación no encontrado');
-    return { id: doc.id, ...doc.data() };
+    console.log('Buscando documento con ID:', id);
+    const docRef = this.collection.doc(id);
+    console.log('Ruta completa del documento:', docRef.path);
+    
+    const doc = await docRef.get();
+    console.log('Documento existe?:', doc.exists);
+    console.log('Datos del documento:', doc.data());
+    
+    if (!doc.exists) {
+      throw new NotFoundException(`Documento con ID ${id} no encontrado`);
+    }
+    
+    const data = doc.data();
+    if (!data) {
+      throw new NotFoundException(`Documento con ID ${id} no contiene datos`);
+    }
+    
+    return { id: doc.id, ...data };
   }
 
   async updateStatus(id: string, status: ApplicationStatus) {

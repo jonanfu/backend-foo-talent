@@ -18,7 +18,7 @@ import { ApplicationStatus } from './enums/application-status.enum';
 @ApiBearerAuth('access-token')
 @Controller('applications')
 export class ApplicationController {
-  constructor(private readonly applicationService: ApplicationService) { }
+  constructor(private applicationService: ApplicationService) { }
 
   @Post()
   @ApiOperation({ summary: 'Crear una aplicación de trabajo con URL de CV' })
@@ -59,12 +59,12 @@ export class ApplicationController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')
   findAllApplications(@Query() query: FindAllApplicationsGlobalDto) {
-    const { status, page = '1', limit = '10' } = query;
+    const { status, page = '1', limit = '1000' } = query;
     return this.applicationService.findAllApplications(status, Number(page), Number(limit));
   }
 
   @Get()
-  @ApiOperation({ summary: "Retorna las aplicaciones de una vacante" })
+  @ApiOperation({ summary: "Retorna las aplicaciones de una postulación" })
   @ApiResponse({ status: 200, description: 'Postulaciones listadas' })
   @ApiResponse({ status: 401, description: 'No autorizado' })
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -85,13 +85,11 @@ export class ApplicationController {
 
   @Get(':id')
   @ApiOperation({ summary: "Retorna el detalle de una aplicación" })
-  @ApiParam({ name: 'id', description: 'ID de la vacante' })
-  @ApiResponse({ status: 200, description: 'Aplicación encontrada' })
-  @ApiResponse({ status: 404, description: 'Aplicación no encontrada' })
+  @ApiParam({ name: 'id', description: 'ID de la postulación' })
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin', 'user')
-  findOne(@Param('id') id: string) {
-    return this.applicationService.findOne(id);
+  async getApplicationById(@Param('id') id: string) {
+    return await this.applicationService.findOne(id);
   }
 
   @Patch(':id/status')
