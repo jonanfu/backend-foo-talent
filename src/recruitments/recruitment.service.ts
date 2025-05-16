@@ -334,10 +334,11 @@ export class RecluitmentService {
                 const isSelected = selectedIdSet.has(candidate.id);
                 const newStatus = isSelected ? ApplicationStatus.IN_REVIEW : ApplicationStatus.DISCARDED;
 
-                //await candidate.docRef.update({
-                //    status: newStatus,
-                //    lastProcessedAt: now
-                //});
+                await candidate.docRef.update({
+                    status: newStatus,
+                    lastProcessedAt: new Date().toISOString()
+            });
+                
                 console.log(`id candidato ${candidate.id} tiene el estado de ${newStatus}`);
 
                 if (!isSelected) {
