@@ -37,7 +37,7 @@ export class ApplicationService {
     };
   }
 
-  async findAllApplications(status?: ApplicationStatus, page = 1, limit = 10) {
+  async findAllApplications(status?: ApplicationStatus, page = 1, limit = 1000) {
     let query = this.collection.orderBy('createdAt', 'desc');
 
     if (status) {
@@ -52,7 +52,7 @@ export class ApplicationService {
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   }
 
-  async findAll(vacancyId: string, status?: ApplicationStatus, page = 1, limit = 10) {
+  async findAll(vacancyId: string, status?: ApplicationStatus, page = 1, limit = 1000) {
     let query = this.collection
       .where('vacancyId', '==', vacancyId)
       .orderBy('createdAt', 'desc');

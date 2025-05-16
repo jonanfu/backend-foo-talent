@@ -31,7 +31,7 @@ export class VacanciesService {
         status?: VacancyStatus,
         search = '',
         page = 1,
-        limit = 10,
+        limit = 1000,
         modalidad?: Modalidad,
         prioridad?: Prioridad,
         ubicacion?: string,

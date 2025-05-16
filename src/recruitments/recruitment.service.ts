@@ -296,4 +296,68 @@ export class RecluitmentService {
         await this.pineconeService.deleteIndex("cv-index");
         return "eliminado información del index";
     }
+
+    async getVectorStore(vacancyId: string, limit: number) {
+        const filter = {
+            vacancyId: { $eq: vacancyId }     
+        };
+
+        const vacancyDoc = await this.collectionVacancies.doc(vacancyId).get();
+            if (!vacancyDoc.exists) {
+                throw new Error(`No se encontró la vacante con ID: ${vacancyId}`);
+            }
+
+            const vacancyData = vacancyDoc.data();
+            const vacancyDescription = `${vacancyData.descripcion || ''}\n\nResponsabilidades:\n${vacancyData.responsabilidades || ''}`;
+
+        const vectorStore = await this.pineconeService.getVectorStore("cv-index");
+
+        const results = await vectorStore.similaritySearchWithScore(vacancyDescription, limit, filter);
+
+        const query = this.collectionApplications
+        .where("vacancyId", '==', vacancyId)
+        .where("status", "==", ApplicationStatus.RECEIVED)
+        ;
+
+        const snapshot = await query.get();
+
+        const allCandidates = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+            docRef: doc.ref
+        }));
+
+        const selectedIds = results.map(([doc]) => doc.metadata.candidateId);
+        const selectedIdSet = new Set(selectedIds);
+        const updatePromises = allCandidates.map(async candidate => {
+            try {
+                const isSelected = selectedIdSet.has(candidate.id);
+                const newStatus = isSelected ? ApplicationStatus.IN_REVIEW : ApplicationStatus.DISCARDED;
+
+                //await candidate.docRef.update({
+                //    status: newStatus,
+                //    lastProcessedAt: now
+                //});
+                console.log(`id candidato ${candidate.id} tiene el estado de ${newStatus}`);
+
+                if (!isSelected) {
+                    try {
+                        //await this.notificationService.sendRejectionEmail(candidate.email, vacancyData.puesto);
+                        console.log("fue descartado")
+                    } catch (emailError) {
+                        console.error(`Failed to send rejection email to ${candidate.email}:`, emailError);
+                    }
+                }
+
+                console.log(`Candidate ${candidate.id} moved to ${newStatus}`);
+            } catch (err) {
+                console.error(`Error processing candidate ${candidate.id}:`, err);
+            }
+        });
+
+        return updatePromises;
+
+    }
+    
+
 }
