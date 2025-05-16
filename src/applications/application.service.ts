@@ -91,6 +91,7 @@ export class ApplicationService {
           return {
             id: doc.id,
             job_posicion: vacancy.puesto,
+            fullName: data.fullName,
             date: formattedDate,
             status: data.status,
             phone: data.phone,
