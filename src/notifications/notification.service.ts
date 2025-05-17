@@ -54,7 +54,7 @@ export class NotificationService {
         message2: 'Agradecemos tu interés y te animamos a aplicar a otras vacantes que publiquemos en el futuro.',
         showButton: true,
         buttonText: 'Ver otras oportunidades',
-        buttonLink: 'https://tuempresa.com/carreras',
+        buttonLink: 'https://sp-equipo12.netlify.app/galeria/vacantes',
       });
 
       // Enviar el correo a través del servicio
@@ -79,7 +79,7 @@ export class NotificationService {
         message2: 'Si tu perfil coincide con los requerimientos, nos pondremos en contacto contigo.',
         showButton: true,
         buttonText: 'Ver otras oportunidades',
-        buttonLink: 'https://tuempresa.com/carreras',
+        buttonLink: 'https://sp-equipo12.netlify.app/galeria/vacantes',
       });
 
       // Enviar el correo a través del servicio
@@ -104,7 +104,7 @@ export class NotificationService {
         message2: `Sus credenciales son las siguientes: ${credential}.`,
         showButton: true,
         buttonText: 'Ir a la página de login',
-        buttonLink: 'https://tuempresa.com/carreras',
+        buttonLink: 'https://sp-equipo12.netlify.app/login',
       });
 
       // Enviar el correo a través del servicio
