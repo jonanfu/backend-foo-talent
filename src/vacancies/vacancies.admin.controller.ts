@@ -1,12 +1,11 @@
 import {
-    Controller, Get, Post, Body, Patch, Param, Delete, Query, Req, UseGuards,
+    Controller, Get, UseGuards,
 } from '@nestjs/common';
 import { VacanciesService } from './vacancies.service';
-import { CreateVacancyDto, VacancyStatus, Modalidad, Prioridad, Jornada } from './dto/create-vacancy.dto';
-import { UpdateVacancyDto } from './dto/update-vacancy.dto';
+
 import {
-    ApiConsumes, ApiBearerAuth, ApiTags, ApiBody,
-    ApiOperation, ApiResponse, ApiQuery, ApiParam,
+    ApiBearerAuth, ApiTags,
+    ApiOperation, ApiResponse, 
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';

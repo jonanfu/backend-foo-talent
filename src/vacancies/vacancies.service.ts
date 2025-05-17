@@ -114,6 +114,7 @@ export class VacanciesService {
                     id: doc.id,
                     recruter_name: dataUser.displayName,
                     puesto: data.puesto,
+                    createadAt: data.fecha,
                     ubicacion: data.ubicacion,
                     modalidad: data.modalidad,
                     estado: data.estado,
